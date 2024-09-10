@@ -77,6 +77,8 @@ Game::~Game()
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+
+	//delete[] backgroundColor;
 }
 
 
@@ -158,9 +160,9 @@ void Game::CreateGeometry()
 {
 	// Create some temporary variables to represent colors
 	// - Not necessary, just makes things more readable
-	XMFLOAT4 red = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+	/*XMFLOAT4 red = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 	XMFLOAT4 green = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);*/
 
 	// Set up the vertices of the triangle we would like to draw
 	// - We're going to copy this array, exactly as it exists in CPU memory
@@ -174,12 +176,12 @@ void Game::CreateGeometry()
 	//    knowing the exact size (in pixels) of the image/window/etc.  
 	// - Long story short: Resizing the window also resizes the triangle,
 	//    since we're describing the triangle in terms of the window itself
-	Vertex vertices[] =
+	/*Vertex vertices[] =
 	{
 		{ XMFLOAT3(+0.0f, +0.5f, +0.0f), red },
 		{ XMFLOAT3(+0.5f, -0.5f, +0.0f), blue },
 		{ XMFLOAT3(-0.5f, -0.5f, +0.0f), green },
-	};
+	};*/
 
 	// Set up indices, which tell us which vertices to use and in which order
 	// - This is redundant for just 3 vertices, but will be more useful later
@@ -198,10 +200,10 @@ void Game::CreateGeometry()
 		//  - Note that this variable is created on the stack since we only need it once
 		//  - After the buffer is created, this description variable is unnecessary
 		D3D11_BUFFER_DESC vbd = {};
-		vbd.Usage = D3D11_USAGE_IMMUTABLE;	// Will NEVER change
+		vbd.Usage = D3D11_USAGE_DYNAMIC;	// Will NEVER change
 		vbd.ByteWidth = sizeof(Vertex) * 3;       // 3 = number of vertices in the buffer
 		vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // Tells Direct3D this is a vertex buffer
-		vbd.CPUAccessFlags = 0;	// Note: We cannot access the data from C++ (this is good)
+		vbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;	// Note: We cannot access the data from C++ (this is good)
 		vbd.MiscFlags = 0;
 		vbd.StructureByteStride = 0;
 
@@ -260,9 +262,23 @@ void Game::Update(float deltaTime, float totalTime)
 {
 	UpdateImGui(deltaTime, totalTime);
 
+#pragma region Attempted to get vertex manipulation working - WORKS BUT CAUSES LEAKS
+	// TEMP; only required for ImGui custom manipulation of vertices
+	// Changes to CreateGeometry() were also made to allow for changing the vertex buffer
+	//D3D11_SUBRESOURCE_DATA initialVertexData = {};
+	//initialVertexData.pSysMem = vertices; // pSysMem = Pointer to System Memory
+
+	//D3D11_MAPPED_SUBRESOURCE resource;
+	//Graphics::Context->Map(vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+	//memcpy(resource.pData, &initialVertexData, sizeof(Vertex) * 3);
+	//Graphics::Context->Unmap(vertexBuffer.Get(), 0);
+#pragma endregion
+
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::KeyDown(VK_ESCAPE))
 		Window::Quit();
+
+	BuildUI();
 }
 
 void Game::UpdateImGui(float deltaTime, float totalTime)
@@ -283,7 +299,42 @@ void Game::UpdateImGui(float deltaTime, float totalTime)
 	Input::SetMouseCapture(io.WantCaptureMouse);
 	
 	// Show the demo window
-	ImGui::ShowDemoWindow();
+	if(!isDemoWindowHidden)
+		ImGui::ShowDemoWindow();
+}
+
+void Game::BuildUI()
+{
+	static int sliderValue = 50;
+
+	ImGui::Begin("Custom Window");
+
+	ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
+	ImGui::Text("Window Size: %ix%i", Window::Width(), Window::Height());
+	ImGui::ColorEdit4("Background Color", backgroundColor);
+
+	// Button to toggle visibility of the ImGui demo window
+	if (ImGui::Button("Toggle Demo Window"))
+		isDemoWindowHidden = !isDemoWindowHidden;
+
+	/* Controls for manipulating vertices */
+
+	ImGui::Text("Vertex 0");
+	ImGui::SliderFloat("Vertex 0: X", &vertices[0].Position.x, -1.0f, 1.0f);
+	ImGui::SliderFloat("Vertex 0: Y", &vertices[0].Position.y, -1.0f, 1.0f);
+	ImGui::SliderFloat("Vertex 0: Z", &vertices[0].Position.z, -1.0f, 1.0f);
+
+	ImGui::Text("Vertex 1");
+	ImGui::SliderFloat("Vertex 1: X", &vertices[1].Position.x, -1.0f, 1.0f);
+	ImGui::SliderFloat("Vertex 1: Y", &vertices[1].Position.y, -1.0f, 1.0f);
+	ImGui::SliderFloat("Vertex 1: Z", &vertices[1].Position.z, -1.0f, 1.0f);
+
+	ImGui::Text("Vertex 2");
+	ImGui::SliderFloat("Vertex 2: X", &vertices[2].Position.x, -1.0f, 1.0f);
+	ImGui::SliderFloat("Vertex 2: Y", &vertices[2].Position.y, -1.0f, 1.0f);
+	ImGui::SliderFloat("Vertex 2: Z", &vertices[2].Position.z, -1.0f, 1.0f);
+
+	ImGui::End();
 }
 
 
@@ -297,8 +348,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - At the beginning of Game::Draw() before drawing *anything*
 	{
 		// Clear the back buffer (erase what's on screen) and depth buffer
-		const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
-		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	color);
+		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	backgroundColor);
 		Graphics::Context->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 

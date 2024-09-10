@@ -3,8 +3,23 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 
+#include "Vertex.h"
+
+#include <DirectXMath.h>
+
 class Game
 {
+private:
+	float backgroundColor[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
+
+	bool isDemoWindowHidden;
+
+	Vertex vertices[3] = {
+		{ DirectX::XMFLOAT3(+0.0f, +0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }, // Red
+		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) }, // Blue
+		{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // Green
+	};
+
 public:
 	// Basic OOP setup
 	Game() = default;
@@ -15,15 +30,17 @@ public:
 	// Primary functions
 	void Initialize();
 	void Update(float deltaTime, float totalTime);
-	void UpdateImGui(float deltaTime, float totalTime);
 	void Draw(float deltaTime, float totalTime);
 	void OnResize();
 
 private:
-
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void LoadShaders();
 	void CreateGeometry();
+
+	// ImGUI implementation
+	void UpdateImGui(float deltaTime, float totalTime);
+	void BuildUI();
 
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
