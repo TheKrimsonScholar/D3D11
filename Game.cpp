@@ -4,7 +4,9 @@
 #include "Input.h"
 #include "PathHelpers.h"
 #include "Window.h"
+#include "VSData.h"
 #include <memory>
+#include <iostream>
 
 #include <DirectXMath.h>
 
@@ -52,6 +54,17 @@ void Game::Initialize()
 		Graphics::Context->VSSetShader(vertexShader.Get(), 0, 0);
 		Graphics::Context->PSSetShader(pixelShader.Get(), 0, 0);
 	}
+
+	// Create constant buffer to hold shader data
+	D3D11_BUFFER_DESC buffDesc;
+	buffDesc.Usage = D3D11_USAGE_DYNAMIC; // Can be changed at any time
+	buffDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	buffDesc.ByteWidth = (sizeof(VSData) + 15) / 16 * 16; // Dirty way of aligning to nearest 16-byte increment
+	buffDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+	Graphics::Device->CreateBuffer(&buffDesc, 0, constantBuffer.GetAddressOf());
+
+	Graphics::Context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 
 	// Initialize ImGui
 	IMGUI_CHECKVERSION();
@@ -201,10 +214,10 @@ void Game::CreateGeometry()
 		//  - Note that this variable is created on the stack since we only need it once
 		//  - After the buffer is created, this description variable is unnecessary
 		D3D11_BUFFER_DESC vbd = {};
-		vbd.Usage = D3D11_USAGE_DYNAMIC;	// Will NEVER change
+		vbd.Usage = D3D11_USAGE_IMMUTABLE;	// Will NEVER change
 		vbd.ByteWidth = sizeof(Vertex) * 3;       // 3 = number of vertices in the buffer
 		vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // Tells Direct3D this is a vertex buffer
-		vbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;	// Note: We cannot access the data from C++ (this is good)
+		vbd.CPUAccessFlags = 0;	// Note: We cannot access the data from C++ (this is good)
 		vbd.MiscFlags = 0;
 		vbd.StructureByteStride = 0;
 
@@ -245,12 +258,44 @@ void Game::CreateGeometry()
 		Graphics::Device->CreateBuffer(&ibd, &initialIndexData, indexBuffer.GetAddressOf());
 	}
 
-	Vertex* newVertices = new Vertex[3] { 
+	/*Vertex newVertices[3] { 
 		{ DirectX::XMFLOAT3(+0.0f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
 		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
 		{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) } };
-	int* newIndices = new int[3] { 0, 1, 2 };
-	triangle = std::make_shared<Mesh>(newVertices, newIndices);
+	int newIndices[3] { 0, 1, 2 };*/
+	triangle = std::make_shared<Mesh>(
+		3, 
+		new Vertex[3]{
+		{ DirectX::XMFLOAT3(+0.0f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) } }, 
+		3, 
+		new unsigned int[3] { 0, 1, 2 });
+	quad = std::make_shared<Mesh>(
+		4,
+		new Vertex[4]{
+		{ DirectX::XMFLOAT3(-0.75f, -0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.75f, -0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(-0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) } },
+		6,
+		new unsigned int[6] { 2, 1, 0, 2, 3, 1 });
+	star = std::make_shared<Mesh>(
+		5,
+		new Vertex[11]{
+		{ DirectX::XMFLOAT3(+0.0f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(-0.5f, +0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.5f, +0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) } },
+		6,
+		new unsigned int[6] { 2, 1, 0, 2, 3, 1 });
 }
 
 
@@ -360,6 +405,16 @@ void Game::Draw(float deltaTime, float totalTime)
 		Graphics::Context->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
+	VSData data;
+	data.Offset = XMFLOAT3(0.5f, 0, 0);
+	data.ColorTint = XMFLOAT4(1, 0, 1, 1);
+
+	D3D11_MAPPED_SUBRESOURCE map;
+
+	Graphics::Context->Map(constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &map);
+	memcpy(map.pData, &data, sizeof(VSData));
+	Graphics::Context->Unmap(constantBuffer.Get(), 0);
+
 	// DRAW geometry
 	// - These steps are generally repeated for EACH object you draw
 	// - Other Direct3D calls will also be necessary to do more complex things
@@ -386,6 +441,7 @@ void Game::Draw(float deltaTime, float totalTime)
 			0);    // Offset to add to each index when looking up vertices
 
 		triangle.get()->Draw();
+		quad.get()->Draw();
 	}
 
 	// Frame END

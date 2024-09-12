@@ -9,11 +9,13 @@ class Mesh
 private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
-	int vertexCount;
-	int indexCount;
+	Vertex* vertices;
+	size_t vertexCount;
+	unsigned int* indices;
+	size_t indexCount;
 
 public:
-	Mesh(Vertex vertices[], int indices[]);
+	Mesh(size_t vertexCount, Vertex vertices[], size_t indexCount, unsigned int indices[]);
 	~Mesh();
 
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer() { return vertexBuffer; };

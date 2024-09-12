@@ -22,6 +22,10 @@ private:
 		{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // Green
 	};
 
+	std::shared_ptr<Mesh> triangle;
+	std::shared_ptr<Mesh> quad;
+	std::shared_ptr<Mesh> star;
+
 public:
 	// Basic OOP setup
 	Game() = default;
@@ -58,6 +62,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 
-	std::shared_ptr<Mesh> triangle;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer;
 };
 
