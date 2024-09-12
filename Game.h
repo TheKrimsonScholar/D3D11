@@ -2,8 +2,10 @@
 
 #include <d3d11.h>
 #include <wrl/client.h>
+#include <memory>
 
 #include "Vertex.h"
+#include "Mesh.h"
 
 #include <DirectXMath.h>
 
@@ -55,5 +57,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+
+	std::shared_ptr<Mesh> triangle;
 };
 
