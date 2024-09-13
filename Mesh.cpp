@@ -3,17 +3,21 @@
 
 #include <iostream>
 
-Mesh::Mesh(size_t vertexCount, Vertex vertices[], size_t indexCount, unsigned int indices[])
+Mesh::Mesh(std::string name, size_t vertexCount, Vertex vertices[], size_t indexCount, unsigned int indices[])
 {
+	this->name = name;
+
 	this->vertexCount = vertexCount;
 	this->indexCount = indexCount;
 
 	this->vertices = vertices;
 	this->indices = indices;
 
+	/* Create Vertex Buffer */
+
 	D3D11_BUFFER_DESC vbInfo;
-	vbInfo.Usage = D3D11_USAGE_IMMUTABLE;
-	vbInfo.ByteWidth = sizeof(Vertex) * vertexCount; //sizeof(vertices);
+	vbInfo.Usage = D3D11_USAGE_IMMUTABLE; // Buffer can't be modified
+	vbInfo.ByteWidth = sizeof(Vertex) * vertexCount;
 	vbInfo.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vbInfo.CPUAccessFlags = 0;
 	vbInfo.MiscFlags = 0;
@@ -24,9 +28,11 @@ Mesh::Mesh(size_t vertexCount, Vertex vertices[], size_t indexCount, unsigned in
 
 	Graphics::Device->CreateBuffer(&vbInfo, &initialVertexData, vertexBuffer.GetAddressOf());
 
+	/* Create Index Buffer */
+
 	D3D11_BUFFER_DESC ibInfo;
-	ibInfo.Usage = D3D11_USAGE_IMMUTABLE;
-	ibInfo.ByteWidth = sizeof(unsigned int) * indexCount; //sizeof(indices)
+	ibInfo.Usage = D3D11_USAGE_IMMUTABLE; // Buffer can't be modified
+	ibInfo.ByteWidth = sizeof(unsigned int) * indexCount;
 	ibInfo.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	ibInfo.CPUAccessFlags = 0;
 	ibInfo.MiscFlags = 0;
@@ -45,10 +51,12 @@ Mesh::~Mesh()
 
 void Mesh::Draw()
 {
+	// Set vertex and index buffers to the ones used for this mesh
 	UINT stride = sizeof(Vertex); // Space between starting indices for each vertex
 	UINT offset = 0;
 	Graphics::Context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
 	Graphics::Context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
+	// Start drawing the mesh
 	Graphics::Context->DrawIndexed(indexCount, 0, 0);
 }

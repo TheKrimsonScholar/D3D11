@@ -6,6 +6,7 @@
 
 #include "Vertex.h"
 #include "Mesh.h"
+#include <vector>
 
 #include <DirectXMath.h>
 
@@ -22,6 +23,7 @@ private:
 		{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // Green
 	};
 
+	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::shared_ptr<Mesh> triangle;
 	std::shared_ptr<Mesh> quad;
 	std::shared_ptr<Mesh> star;
