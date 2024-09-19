@@ -24,9 +24,9 @@ private:
 	};
 
 	std::vector<std::shared_ptr<Mesh>> meshes;
-	std::shared_ptr<Mesh> triangle;
-	std::shared_ptr<Mesh> quad;
-	std::shared_ptr<Mesh> star;
+
+	float* Offset = new float[3] { 0.25f, 0, 0 };
+	float* ColorTint = new float[4] { 1, 1, 1, 1 };
 
 public:
 	// Basic OOP setup
@@ -66,4 +66,3 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer;
 };
-

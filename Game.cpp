@@ -4,7 +4,7 @@
 #include "Input.h"
 #include "PathHelpers.h"
 #include "Window.h"
-#include "VSData.h"
+#include "BufferStructs.h"
 #include <memory>
 #include <iostream>
 
@@ -55,6 +55,16 @@ void Game::Initialize()
 		Graphics::Context->PSSetShader(pixelShader.Get(), 0, 0);
 	}
 
+	D3D11_BUFFER_DESC cbData = {};
+	cbData.ByteWidth = (sizeof(VSData) + 15) / 16 * 16; // Dirty way of aligning to nearest 16-byte increment
+	cbData.Usage = D3D11_USAGE_DYNAMIC; // Can be changed at any time
+	cbData.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbData.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+	Graphics::Device->CreateBuffer(&cbData, 0, constantBuffer.GetAddressOf());
+
+	Graphics::Context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+
 	// Initialize ImGui
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -76,6 +86,9 @@ void Game::Initialize()
 // --------------------------------------------------------
 Game::~Game()
 {
+	delete[] Offset;
+	delete[] ColorTint;
+
 	// Clean up for ImGui
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
@@ -370,6 +383,10 @@ void Game::BuildUI()
 	if (ImGui::Button("Toggle Demo Window"))
 		isDemoWindowHidden = !isDemoWindowHidden;
 
+	// Vertex offset and color tint controls
+	ImGui::DragFloat3("Offset", Offset, 0.1f, -1, 1);
+	ImGui::ColorEdit4("ColorTint", ColorTint);
+
 	if(ImGui::TreeNode("Meshes"))
 	{
 		// Display the vertex and triangle count of each mesh
@@ -420,6 +437,17 @@ void Game::Draw(float deltaTime, float totalTime)
 		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	backgroundColor);
 		Graphics::Context->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
+
+	// Create data to be sent to the vertex shader
+	VSData vsData;
+	vsData.Offset = XMFLOAT3(Offset);
+	vsData.ColorTint = XMFLOAT4(ColorTint);
+
+	// Write to the constant buffer so it can be used by the vertex shader
+	D3D11_MAPPED_SUBRESOURCE mapped = {};
+	Graphics::Context->Map(constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	memcpy(mapped.pData, &vsData, sizeof(VSData));
+	Graphics::Context->Unmap(constantBuffer.Get(), 0);
 
 	// DRAW geometry
 	// - These steps are generally repeated for EACH object you draw

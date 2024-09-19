@@ -22,8 +22,8 @@ public:
 
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer() { return vertexBuffer; };
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetIndexBuffer() { return indexBuffer; };
-	int GetVertexCount() { return vertexCount; };
-	int GetIndexCount() { return indexCount; };
+	size_t GetVertexCount() { return vertexCount; };
+	size_t GetIndexCount() { return indexCount; };
 	std::string GetName() { return name; };
 	void Draw();
 };
