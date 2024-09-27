@@ -415,20 +415,34 @@ void Game::BuildUI()
 	}
 	if(ImGui::TreeNode("Entities"))
 	{
-		// Display the vertex and triangle count of each mesh
+		// Display the transform information for each entity
 		for(int i = 0; i < entities.size(); i++)
 		{
 			std::shared_ptr<Entity> entity = entities[i];
 
-			if(ImGui::TreeNode("e", "Entity %i", i))
+			ImGui::PushID(entity.get());
+			if(ImGui::TreeNode("Entity", "Entity %i", i))
 			{
-				ImGui::Text("Mesh: %s", entity->GetMesh()->GetName());
+				ImGui::Text("Mesh: %s", entity->GetMesh()->GetName().c_str());
 
-				//XMFLOAT3 k2;
-				//float& k[3] { k2.x, k2.y, k2.z };
-				//ImGui::DragFloat3("", entity->GetTransform()->GetLocation(),);
+				Transform* transform = entity->GetTransform();
+
+				XMFLOAT3 location = transform->GetLocation();
+				XMFLOAT3 rotation = transform->GetPitchYawRoll();
+				XMFLOAT3 scale = transform->GetScale();
+
+				if(ImGui::DragFloat3("Location", &location.x, 0.1f))
+					transform->SetLocation(location);
+				if(ImGui::DragFloat3("Rotation", &rotation.x, 0.1f))
+					transform->SetRotation(rotation);
+				if(ImGui::DragFloat3("Scale", &scale.x, 0.1f))
+					transform->SetScale(scale);
+
+				ImGui::Text("Mesh Index Count: %i", entity->GetMesh()->GetIndexCount());
+
 				ImGui::TreePop();
 			}
+			ImGui::PopID();
 		}
 		ImGui::TreePop();
 	}
@@ -451,6 +465,10 @@ void Game::BuildUI()
 	ImGui::SliderFloat("Vertex 2: Z", &vertices[2].Position.z, -1.0f, 1.0f);
 
 	ImGui::End();
+}
+void EntityUI()
+{
+
 }
 
 
