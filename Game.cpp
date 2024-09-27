@@ -86,8 +86,8 @@ void Game::Initialize()
 // --------------------------------------------------------
 Game::~Game()
 {
-	delete[] Offset;
-	delete[] ColorTint;
+	delete[] offset;
+	delete[] colorTint;
 
 	// Clean up for ImGui
 	ImGui_ImplDX11_Shutdown();
@@ -309,6 +309,20 @@ void Game::CreateGeometry()
 		{ DirectX::XMFLOAT3(+0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) } },
 		6,
 		new unsigned int[6] { 2, 1, 0, 2, 3, 1 }));
+
+	// Create an entity for each mesh
+	for(std::shared_ptr<Mesh> m : meshes)
+		entities.push_back(std::make_shared<Entity>(m));
+
+	/* Create two extra star entities to show multiple entites using the same mesh */
+
+	std::shared_ptr<Entity> newStar1 = std::make_shared<Entity>(meshes[0]);
+	newStar1->GetTransform()->MoveAbsolute(0, 0.5f, 0);
+	entities.push_back(newStar1);
+
+	std::shared_ptr<Entity> newStar2 = std::make_shared<Entity>(meshes[0]);
+	newStar2->GetTransform()->MoveAbsolute(0, -0.5f, 0);
+	entities.push_back(newStar2);
 }
 
 
@@ -328,23 +342,20 @@ void Game::Update(float deltaTime, float totalTime)
 {
 	UpdateImGui(deltaTime, totalTime);
 
-#pragma region Attempted to get vertex manipulation working - WORKS BUT CAUSES LEAKS
-	// TEMP; only required for ImGui custom manipulation of vertices
-	// Changes to CreateGeometry() were also made to allow for changing the vertex buffer
-	//D3D11_SUBRESOURCE_DATA initialVertexData = {};
-	//initialVertexData.pSysMem = vertices; // pSysMem = Pointer to System Memory
-
-	//D3D11_MAPPED_SUBRESOURCE resource;
-	//Graphics::Context->Map(vertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-	//memcpy(resource.pData, &initialVertexData, sizeof(Vertex) * 3);
-	//Graphics::Context->Unmap(vertexBuffer.Get(), 0);
-#pragma endregion
-
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::KeyDown(VK_ESCAPE))
 		Window::Quit();
 
 	BuildUI();
+
+	for(std::shared_ptr<Entity> e : entities)
+	{
+		e->GetTransform()->MoveAbsolute(cos(totalTime) * deltaTime, 0, 0);
+		e->GetTransform()->Rotate(0, 0, deltaTime);
+
+		float scaleAmount = 1 - (0.05f * deltaTime);
+		e->GetTransform()->Scale(scaleAmount, scaleAmount, scaleAmount);
+	}
 }
 
 void Game::UpdateImGui(float deltaTime, float totalTime)
@@ -384,8 +395,8 @@ void Game::BuildUI()
 		isDemoWindowHidden = !isDemoWindowHidden;
 
 	// Vertex offset and color tint controls
-	ImGui::DragFloat3("Offset", Offset, 0.1f, -1, 1);
-	ImGui::ColorEdit4("ColorTint", ColorTint);
+	ImGui::DragFloat3("Offset", offset, 0.1f, -1, 1);
+	ImGui::ColorEdit4("ColorTint", colorTint);
 
 	if(ImGui::TreeNode("Meshes"))
 	{
@@ -397,6 +408,25 @@ void Game::BuildUI()
 				ImGui::Text("Vertices: %i", mesh->GetVertexCount());
 				ImGui::Text("Triangles: %i", mesh->GetIndexCount() / 3);
 				ImGui::Text("Indices: %i", mesh->GetIndexCount());
+				ImGui::TreePop();
+			}
+		}
+		ImGui::TreePop();
+	}
+	if(ImGui::TreeNode("Entities"))
+	{
+		// Display the vertex and triangle count of each mesh
+		for(int i = 0; i < entities.size(); i++)
+		{
+			std::shared_ptr<Entity> entity = entities[i];
+
+			if(ImGui::TreeNode("e", "Entity %i", i))
+			{
+				ImGui::Text("Mesh: %s", entity->GetMesh()->GetName());
+
+				//XMFLOAT3 k2;
+				//float& k[3] { k2.x, k2.y, k2.z };
+				//ImGui::DragFloat3("", entity->GetTransform()->GetLocation(),);
 				ImGui::TreePop();
 			}
 		}
@@ -440,8 +470,8 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	// Create data to be sent to the vertex shader
 	VSData vsData;
-	vsData.Offset = XMFLOAT3(Offset);
-	vsData.ColorTint = XMFLOAT4(ColorTint);
+	vsData.offset = XMFLOAT4X4(offset);
+	vsData.colorTint = XMFLOAT4(colorTint);
 
 	// Write to the constant buffer so it can be used by the vertex shader
 	D3D11_MAPPED_SUBRESOURCE mapped = {};
@@ -475,8 +505,12 @@ void Game::Draw(float deltaTime, float totalTime)
 		//	0);    // Offset to add to each index when looking up vertices
 
 		// Draw all meshes
-		for(std::shared_ptr<Mesh> mesh : meshes)
-			mesh->Draw();
+		//for(std::shared_ptr<Mesh> mesh : meshes)
+			//mesh->Draw();
+
+		// Draw all entities
+		for(std::shared_ptr<Entity> e : entities)
+			e->Draw(constantBuffer);
 	}
 
 	// Frame END

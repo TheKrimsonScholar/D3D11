@@ -4,6 +4,6 @@
 
 struct VSData
 {
-	DirectX::XMFLOAT3 Offset;
-	DirectX::XMFLOAT4 ColorTint;
+	DirectX::XMFLOAT4X4 offset;
+	DirectX::XMFLOAT4 colorTint;
 };

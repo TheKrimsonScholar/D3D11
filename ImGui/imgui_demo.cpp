@@ -282,7 +282,7 @@ struct ExampleMemberInfo
     const char*     Name;       // Member name
     ImGuiDataType   DataType;   // Member type
     int             DataCount;  // Member count (1 when scalar)
-    int             Offset;     // Offset inside parent structure
+    int             offset;     // Offset inside parent structure
 };
 
 // Metadata description of ExampleTreeNode struct.
@@ -8879,7 +8879,7 @@ struct ExampleAppPropertyEditor
                         ImGui::AlignTextToFramePadding();
                         ImGui::TextUnformatted(field_desc.Name);
                         ImGui::TableNextColumn();
-                        void* field_ptr = (void*)(((unsigned char*)node) + field_desc.Offset);
+                        void* field_ptr = (void*)(((unsigned char*)node) + field_desc.offset);
                         switch (field_desc.DataType)
                         {
                         case ImGuiDataType_Bool:

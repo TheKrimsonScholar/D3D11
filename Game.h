@@ -3,12 +3,13 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <memory>
-
-#include "Vertex.h"
-#include "Mesh.h"
 #include <vector>
 
 #include <DirectXMath.h>
+
+#include "Vertex.h"
+#include "Mesh.h"
+#include "Entity.h"
 
 class Game
 {
@@ -24,9 +25,10 @@ private:
 	};
 
 	std::vector<std::shared_ptr<Mesh>> meshes;
+	std::vector<std::shared_ptr<Entity>> entities;
 
-	float* Offset = new float[3] { 0.25f, 0, 0 };
-	float* ColorTint = new float[4] { 1, 1, 1, 1 };
+	float* offset = new float[3] { 0.25f, 0, 0 };
+	float* colorTint = new float[4] { 1, 1, 1, 1 };
 
 public:
 	// Basic OOP setup
