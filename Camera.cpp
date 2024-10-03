@@ -43,24 +43,20 @@ void Camera::Update(float deltaTime)
 
 XMFLOAT4X4 Camera::UpdateViewMatrix()
 {
-	XMFLOAT4X4 viewMat;
-
 	XMFLOAT3 location = transform.GetLocation();
 	XMFLOAT3 forward = transform.GetForward();
 	XMFLOAT3 up = transform.GetUp();
 
-	XMStoreFloat4x4(&viewMat, XMMatrixLookToLH(
+	XMStoreFloat4x4(&viewMatrix, XMMatrixLookToLH(
 		XMLoadFloat3(&location), 
 		XMLoadFloat3(&forward), 
 		XMLoadFloat3(&up)));
-	return viewMat;
+	return viewMatrix;
 }
 XMFLOAT4X4 Camera::UpdateProjectionMatrix(float aspectRatio)
 {
-	XMFLOAT4X4 projMat;
-
-	XMStoreFloat4x4(&projMat, XMMatrixPerspectiveFovLH(fov, aspectRatio, nearDistance, farDistance));
-	return projMat;
+	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(fov, aspectRatio, nearDistance, farDistance));
+	return projMatrix;
 }
 
 XMFLOAT4X4 Camera::GetViewMatrix()
