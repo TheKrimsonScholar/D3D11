@@ -815,8 +815,8 @@ struct ImGuiDataVarInfo
 {
     ImGuiDataType   Type;
     ImU32           Count;      // 1+
-    ImU32           worldMatrix;     // Offset in parent structure
-    void* GetVarPtr(void* parent) const { return (void*)((unsigned char*)parent + worldMatrix); }
+    ImU32           offset;     // Offset in parent structure
+    void* GetVarPtr(void* parent) const { return (void*)((unsigned char*)parent + offset); }
 };
 
 struct ImGuiDataTypeStorage
@@ -2745,7 +2745,7 @@ struct ImGuiTabItem
     ImGuiTabItemFlags   Flags;
     int                 LastFrameVisible;
     int                 LastFrameSelected;      // This allows us to infer an ordered list of the last activated tabs with little maintenance
-    float               worldMatrix;                 // Position relative to beginning of tab
+    float               offset;                 // Position relative to beginning of tab
     float               Width;                  // Width currently displayed
     float               ContentWidth;           // Width of label, stored during BeginTabItem() call
     float               RequestedWidth;         // Width optionally requested by caller, -1.0f is unused
@@ -3422,7 +3422,7 @@ namespace ImGui
     IMGUI_API ImGuiID       GetColumnsID(const char* str_id, int count);
     IMGUI_API ImGuiOldColumns* FindOrCreateColumns(ImGuiWindow* window, ImGuiID id);
     IMGUI_API float         GetColumnOffsetFromNorm(const ImGuiOldColumns* columns, float offset_norm);
-    IMGUI_API float         GetColumnNormFromOffset(const ImGuiOldColumns* columns, float worldMatrix);
+    IMGUI_API float         GetColumnNormFromOffset(const ImGuiOldColumns* columns, float offset);
 
     // Tables: Candidates for public API
     IMGUI_API void          TableOpenContextMenu(int column_n = -1);
@@ -3491,7 +3491,7 @@ namespace ImGui
     IMGUI_API void          TabBarRemoveTab(ImGuiTabBar* tab_bar, ImGuiID tab_id);
     IMGUI_API void          TabBarCloseTab(ImGuiTabBar* tab_bar, ImGuiTabItem* tab);
     IMGUI_API void          TabBarQueueFocus(ImGuiTabBar* tab_bar, ImGuiTabItem* tab);
-    IMGUI_API void          TabBarQueueReorder(ImGuiTabBar* tab_bar, ImGuiTabItem* tab, int worldMatrix);
+    IMGUI_API void          TabBarQueueReorder(ImGuiTabBar* tab_bar, ImGuiTabItem* tab, int offset);
     IMGUI_API void          TabBarQueueReorderFromMousePos(ImGuiTabBar* tab_bar, ImGuiTabItem* tab, ImVec2 mouse_pos);
     IMGUI_API bool          TabBarProcessReorder(ImGuiTabBar* tab_bar);
     IMGUI_API bool          TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, ImGuiTabItemFlags flags, ImGuiWindow* docked_window);

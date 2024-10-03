@@ -10,11 +10,13 @@ Entity::Entity(std::shared_ptr<Mesh> mesh) :
 	this->mesh = mesh;
 }
 
-void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer)
+void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer, std::shared_ptr<Camera> camera)
 {
 	// Create data to be sent to the vertex shader
 	VSData vsData;
 	vsData.worldMatrix = transform.GetWorldMatrix();
+	vsData.viewMatrix = camera->GetViewMatrix();
+	vsData.projMatrix = camera->GetProjectionMatrix();
 	vsData.colorTint = colorTint;
 
 	// Write to the constant buffer so it can be used by the vertex shader

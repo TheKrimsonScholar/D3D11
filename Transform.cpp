@@ -32,17 +32,21 @@ void Transform::MoveAbsolute(DirectX::XMFLOAT3 offset)
 }
 void Transform::MoveRelative(float x, float y, float z)
 {
-	XMVECTOR relOffset(x, y, z);
-	XMFLOAT3 absOffset;
-
-	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
-
-	XMStoreFloat3(&absOffset, XMVector3Rotate(relOffset, rot));
-	SetLocation(absOffset);
+	XMFLOAT3 offset = XMFLOAT3(x, y, z);
+	
+	MoveRelative(offset);
 }
 void Transform::MoveRelative(DirectX::XMFLOAT3 offset)
 {
-	MoveRelative(offset.x, offset.y, offset.z);
+	XMVECTOR relOffset = XMLoadFloat3(&offset);
+	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+	XMVECTOR absOffset = XMVector3Rotate(relOffset, rot);
+
+	XMVECTOR currentLocation = XMLoadFloat3(&location);
+
+	XMFLOAT3 destination;
+	XMStoreFloat3(&destination, currentLocation + absOffset);
+	SetLocation(destination);
 }
 void Transform::Rotate(float pitch, float yaw, float roll)
 {
@@ -67,26 +71,32 @@ XMFLOAT3 Transform::GetPitchYawRoll() { return rotation; }
 XMFLOAT3 Transform::GetScale() { return scale; }
 XMFLOAT3 Transform::GetRight()
 {
+	XMFLOAT3 worldRight = XMFLOAT3(1, 0, 0);
+
 	XMFLOAT3 right;
 	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
 
-	XMStoreFloat3(&right, XMVector3Rotate(XMVECTOR(1, 0, 0), rot));
+	XMStoreFloat3(&right, XMVector3Rotate(XMLoadFloat3(&worldRight), rot));
 	return right;
 }
 XMFLOAT3 Transform::GetUp()
 {
+	XMFLOAT3 worldUp = XMFLOAT3(0, 1, 0);
+
 	XMFLOAT3 up;
 	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
 
-	XMStoreFloat3(&up, XMVector3Rotate(XMVECTOR(0, 1, 0), rot));
+	XMStoreFloat3(&up, XMVector3Rotate(XMLoadFloat3(&worldUp), rot));
 	return up;
 }
 XMFLOAT3 Transform::GetForward()
 {
+	XMFLOAT3 worldForward = XMFLOAT3(0, 0, 1);
+
 	XMFLOAT3 forward;
 	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
 
-	XMStoreFloat3(&forward, XMVector3Rotate(XMVECTOR(0, 0, 1), rot));
+	XMStoreFloat3(&forward, XMVector3Rotate(XMLoadFloat3(&worldForward), rot));
 	return forward;
 }
 XMFLOAT4X4 Transform::GetWorldMatrix()

@@ -55,6 +55,8 @@ void Game::Initialize()
 		Graphics::Context->PSSetShader(pixelShader.Get(), 0, 0);
 	}
 
+	/* Create Constant Buffer */
+
 	D3D11_BUFFER_DESC cbData = {};
 	cbData.ByteWidth = (sizeof(VSData) + 15) / 16 * 16; // Dirty way of aligning to nearest 16-byte increment
 	cbData.Usage = D3D11_USAGE_DYNAMIC; // Can be changed at any time
@@ -64,6 +66,10 @@ void Game::Initialize()
 	Graphics::Device->CreateBuffer(&cbData, 0, constantBuffer.GetAddressOf());
 
 	Graphics::Context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+
+	/* Create Camera */
+
+	camera = std::make_shared<Camera>(XMFLOAT3(0, 0, -1), XMFLOAT3(0, 0, 0), (float) Window::Width() / Window::Height(), 60.0f);
 
 	// Initialize ImGui
 	IMGUI_CHECKVERSION();
@@ -86,7 +92,7 @@ void Game::Initialize()
 // --------------------------------------------------------
 Game::~Game()
 {
-	delete[] worldMatrix;
+	delete[] offset;
 	delete[] colorTint;
 
 	// Clean up for ImGui
@@ -332,6 +338,8 @@ void Game::CreateGeometry()
 // --------------------------------------------------------
 void Game::OnResize()
 {
+	if(camera)
+		camera->UpdateProjectionMatrix((float) Window::Width() / Window::Height());
 }
 
 
@@ -347,6 +355,8 @@ void Game::Update(float deltaTime, float totalTime)
 		Window::Quit();
 
 	BuildUI();
+
+	camera->Update(deltaTime);
 
 	for(std::shared_ptr<Entity> e : entities)
 	{
@@ -395,8 +405,15 @@ void Game::BuildUI()
 		isDemoWindowHidden = !isDemoWindowHidden;
 
 	// Vertex offset and color tint controls
-	ImGui::DragFloat3("Offset", worldMatrix, 0.1f, -1, 1);
+	ImGui::DragFloat3("Offset", offset, 0.1f, -1, 1);
 	ImGui::ColorEdit4("ColorTint", colorTint);
+
+	XMFLOAT3 location = camera->GetTransform().GetLocation();
+	XMFLOAT3 rotation = camera->GetTransform().GetPitchYawRoll();
+	XMFLOAT3 scale = camera->GetTransform().GetScale();
+	ImGui::DragFloat3("Camera Location", &location.x, 0.1f, -100, 100);
+	ImGui::DragFloat3("Camera Rotation", &rotation.x, 0.1f, -100, 100);
+	ImGui::DragFloat3("Camera Scale", &scale.x, 0.1f, -100, 100);
 
 	if(ImGui::TreeNode("Meshes"))
 	{
@@ -488,7 +505,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	// Create data to be sent to the vertex shader
 	VSData vsData;
-	vsData.worldMatrix = XMFLOAT4X4(worldMatrix);
+	vsData.worldMatrix = XMFLOAT4X4(offset);
 	vsData.colorTint = XMFLOAT4(colorTint);
 
 	// Write to the constant buffer so it can be used by the vertex shader
@@ -507,8 +524,8 @@ void Game::Draw(float deltaTime, float totalTime)
 		//  - However, this needs to be done between EACH DrawIndexed() call
 		//     when drawing different geometry, so it's here as an example
 		UINT stride = sizeof(Vertex);
-		UINT worldMatrix = 0;
-		Graphics::Context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &worldMatrix);
+		UINT offset = 0;
+		Graphics::Context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
 		Graphics::Context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 		// Tell Direct3D to draw
@@ -528,7 +545,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		// Draw all entities
 		for(std::shared_ptr<Entity> e : entities)
-			e->Draw(constantBuffer);
+			e->Draw(constantBuffer, camera);
 	}
 
 	// Frame END

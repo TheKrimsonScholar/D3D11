@@ -10,6 +10,7 @@
 #include "Vertex.h"
 #include "Mesh.h"
 #include "Entity.h"
+#include "Camera.h"
 
 class Game
 {
@@ -17,6 +18,8 @@ private:
 	float backgroundColor[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 
 	bool isDemoWindowHidden;
+
+	std::shared_ptr<Camera> camera;
 
 	Vertex vertices[3] = {
 		{ DirectX::XMFLOAT3(+0.0f, +0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }, // Red
@@ -27,7 +30,7 @@ private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Entity>> entities;
 
-	float* worldMatrix = new float[3] { 0.25f, 0, 0 };
+	float* offset = new float[3] { 0.25f, 0, 0 };
 	float* colorTint = new float[4] { 1, 1, 1, 1 };
 
 public:

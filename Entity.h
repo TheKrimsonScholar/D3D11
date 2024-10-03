@@ -4,6 +4,7 @@
 
 #include "Transform.h"
 #include "Mesh.h"
+#include "Camera.h"
 
 class Entity
 {
@@ -18,7 +19,7 @@ private:
 public:
 	Entity(std::shared_ptr<Mesh> mesh);
 
-	void Draw(Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer);
+	void Draw(Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer, std::shared_ptr<Camera> camera);
 
 	Transform* GetTransform();
 	std::shared_ptr<Mesh> GetMesh();

@@ -8423,23 +8423,23 @@ void ImGuiMenuColumns::Update(float spacing, bool window_reappearing)
 
 void ImGuiMenuColumns::CalcNextTotalWidth(bool update_offsets)
 {
-    ImU16 worldMatrix = 0;
+    ImU16 offset = 0;
     bool want_spacing = false;
     for (int i = 0; i < IM_ARRAYSIZE(Widths); i++)
     {
         ImU16 width = Widths[i];
         if (want_spacing && width > 0)
-            worldMatrix += Spacing;
+            offset += Spacing;
         want_spacing |= (width > 0);
         if (update_offsets)
         {
-            if (i == 1) { OffsetLabel = worldMatrix; }
-            if (i == 2) { OffsetShortcut = worldMatrix; }
-            if (i == 3) { OffsetMark = worldMatrix; }
+            if (i == 1) { OffsetLabel = offset; }
+            if (i == 2) { OffsetShortcut = offset; }
+            if (i == 3) { OffsetMark = offset; }
         }
-        worldMatrix += width;
+        offset += width;
     }
-    NextTotalWidth = worldMatrix;
+    NextTotalWidth = offset;
 }
 
 float ImGuiMenuColumns::DeclColumns(float w_icon, float w_label, float w_shortcut, float w_mark)
@@ -9347,7 +9347,7 @@ static void ImGui::TabBarLayout(ImGuiTabBar* tab_bar)
         for (int tab_n = 0; tab_n < section->TabCount; tab_n++)
         {
             ImGuiTabItem* tab = &tab_bar->Tabs[section_tab_index + tab_n];
-            tab->worldMatrix = tab_offset;
+            tab->offset = tab_offset;
             tab->NameOffset = -1;
             tab_offset += tab->Width + (tab_n < section->TabCount - 1 ? g.Style.ItemInnerSpacing.x : 0.0f);
         }
@@ -9525,8 +9525,8 @@ static void ImGui::TabBarScrollToTab(ImGuiTabBar* tab_bar, ImGuiID tab_id, ImGui
     float scrollable_width = TabBarCalcScrollableWidth(tab_bar, sections);
 
     // We make all tabs positions all relative Sections[0].Width to make code simpler
-    float tab_x1 = tab->worldMatrix - sections[0].Width + (order > sections[0].TabCount - 1 ? -margin : 0.0f);
-    float tab_x2 = tab->worldMatrix - sections[0].Width + tab->Width + (order + 1 < tab_bar->Tabs.Size - sections[2].TabCount ? margin : 1.0f);
+    float tab_x1 = tab->offset - sections[0].Width + (order > sections[0].TabCount - 1 ? -margin : 0.0f);
+    float tab_x2 = tab->offset - sections[0].Width + tab->Width + (order + 1 < tab_bar->Tabs.Size - sections[2].TabCount ? margin : 1.0f);
     tab_bar->ScrollingTargetDistToVisibility = 0.0f;
     if (tab_bar->ScrollingTarget > tab_x1 || (tab_x2 - tab_x1 >= scrollable_width))
     {
@@ -9547,12 +9547,12 @@ void ImGui::TabBarQueueFocus(ImGuiTabBar* tab_bar, ImGuiTabItem* tab)
     tab_bar->NextSelectedTabId = tab->ID;
 }
 
-void ImGui::TabBarQueueReorder(ImGuiTabBar* tab_bar, ImGuiTabItem* tab, int worldMatrix)
+void ImGui::TabBarQueueReorder(ImGuiTabBar* tab_bar, ImGuiTabItem* tab, int offset)
 {
-    IM_ASSERT(worldMatrix != 0);
+    IM_ASSERT(offset != 0);
     IM_ASSERT(tab_bar->ReorderRequestTabId == 0);
     tab_bar->ReorderRequestTabId = tab->ID;
-    tab_bar->ReorderRequestOffset = (ImS16)worldMatrix;
+    tab_bar->ReorderRequestOffset = (ImS16)offset;
 }
 
 void ImGui::TabBarQueueReorderFromMousePos(ImGuiTabBar* tab_bar, ImGuiTabItem* src_tab, ImVec2 mouse_pos)
@@ -9566,7 +9566,7 @@ void ImGui::TabBarQueueReorderFromMousePos(ImGuiTabBar* tab_bar, ImGuiTabItem* s
     const float bar_offset = tab_bar->BarRect.Min.x - (is_central_section ? tab_bar->ScrollingTarget : 0);
 
     // Count number of contiguous tabs we are crossing over
-    const int dir = (bar_offset + src_tab->worldMatrix) > mouse_pos.x ? -1 : +1;
+    const int dir = (bar_offset + src_tab->offset) > mouse_pos.x ? -1 : +1;
     const int src_idx = tab_bar->Tabs.index_from_ptr(src_tab);
     int dst_idx = src_idx;
     for (int i = src_idx; i >= 0 && i < tab_bar->Tabs.Size; i += dir)
@@ -9580,8 +9580,8 @@ void ImGui::TabBarQueueReorderFromMousePos(ImGuiTabBar* tab_bar, ImGuiTabItem* s
         dst_idx = i;
 
         // Include spacing after tab, so when mouse cursor is between tabs we would not continue checking further tabs that are not hovered.
-        const float x1 = bar_offset + dst_tab->worldMatrix - g.Style.ItemInnerSpacing.x;
-        const float x2 = bar_offset + dst_tab->worldMatrix + dst_tab->Width + g.Style.ItemInnerSpacing.x;
+        const float x1 = bar_offset + dst_tab->offset - g.Style.ItemInnerSpacing.x;
+        const float x2 = bar_offset + dst_tab->offset + dst_tab->Width + g.Style.ItemInnerSpacing.x;
         //GetForegroundDrawList()->AddRect(ImVec2(x1, tab_bar->BarRect.Min.y), ImVec2(x2, tab_bar->BarRect.Max.y), IM_COL32(255, 0, 0, 255));
         if ((dir < 0 && mouse_pos.x > x1) || (dir > 0 && mouse_pos.x < x2))
             break;
@@ -9910,9 +9910,9 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
     const bool is_central_section = (tab->Flags & ImGuiTabItemFlags_SectionMask_) == 0;
     size.x = tab->Width;
     if (is_central_section)
-        window->DC.CursorPos = tab_bar->BarRect.Min + ImVec2(IM_TRUNC(tab->worldMatrix - tab_bar->ScrollingAnim), 0.0f);
+        window->DC.CursorPos = tab_bar->BarRect.Min + ImVec2(IM_TRUNC(tab->offset - tab_bar->ScrollingAnim), 0.0f);
     else
-        window->DC.CursorPos = tab_bar->BarRect.Min + ImVec2(tab->worldMatrix, 0.0f);
+        window->DC.CursorPos = tab_bar->BarRect.Min + ImVec2(tab->offset, 0.0f);
     ImVec2 pos = window->DC.CursorPos;
     ImRect bb(pos, pos + size);
 

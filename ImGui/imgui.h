@@ -900,7 +900,7 @@ namespace ImGui
     // Focus, Activation
     // - Prefer using "SetItemDefaultFocus()" over "if (IsWindowAppearing()) SetScrollHereY()" when applicable to signify "this is the default item"
     IMGUI_API void          SetItemDefaultFocus();                                              // make last item the default focused item of a window.
-    IMGUI_API void          SetKeyboardFocusHere(int worldMatrix = 0);                               // focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget. Use -1 to access previous widget.
+    IMGUI_API void          SetKeyboardFocusHere(int offset = 0);                               // focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget. Use -1 to access previous widget.
 
     // Overlapping mode
     IMGUI_API void          SetNextItemAllowOverlap();                                          // allow next item to be overlapped by a subsequent item. Useful with invisible buttons, selectable, treenode covering an area where subsequent items may need to be added. Note that both Selectable() and TreeNode() have dedicated flags doing this.
@@ -3336,7 +3336,7 @@ struct ImFontAtlas
     // - Read docs/FONTS.md for more details about using colorful icons.
     // - Note: this API may be redesigned later in order to support multi-monitor varying DPI settings.
     IMGUI_API int               AddCustomRectRegular(int width, int height);
-    IMGUI_API int               AddCustomRectFontGlyph(ImFont* font, ImWchar id, int width, int height, float advance_x, const ImVec2& worldMatrix = ImVec2(0, 0));
+    IMGUI_API int               AddCustomRectFontGlyph(ImFont* font, ImWchar id, int width, int height, float advance_x, const ImVec2& offset = ImVec2(0, 0));
     ImFontAtlasCustomRect*      GetCustomRectByIndex(int index) { IM_ASSERT(index >= 0); return &CustomRects[index]; }
 
     // [Internal]

@@ -53,8 +53,8 @@ void Mesh::Draw()
 {
 	// Set vertex and index buffers to the ones used for this mesh
 	UINT stride = sizeof(Vertex); // Space between starting indices for each vertex
-	UINT worldMatrix = 0;
-	Graphics::Context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &worldMatrix);
+	UINT offset = 0;
+	Graphics::Context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
 	Graphics::Context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 	// Start drawing the mesh
