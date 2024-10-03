@@ -11,13 +11,13 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
 	Vertex* vertices;
-	size_t vertexCount;
+	UINT vertexCount;
 	unsigned int* indices;
-	size_t indexCount;
+	UINT indexCount;
 	std::string name;
 
 public:
-	Mesh(std::string name, size_t vertexCount, Vertex vertices[], size_t indexCount, unsigned int indices[]);
+	Mesh(std::string name, UINT vertexCount, Vertex vertices[], UINT indexCount, unsigned int indices[]);
 	~Mesh();
 
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer() { return vertexBuffer; };

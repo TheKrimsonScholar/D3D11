@@ -8,7 +8,17 @@ Transform::Transform() :
 	scale(1, 1, 1),
 	isWorldMatrixDirty(false)
 {
-	XMStoreFloat4x4(&offset, XMMatrixIdentity());
+	XMStoreFloat4x4(&worldMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&worldInverseTransposeMatrix, XMMatrixIdentity());
+}
+Transform::Transform(XMFLOAT3 location, XMFLOAT3 rotation, XMFLOAT3 scale) : 
+	location(location), 
+	rotation(rotation), 
+	scale(scale),
+	isWorldMatrixDirty(true) // Matrices aren't calculated yet
+{
+	// Default matrices; will be calculated the first time GetWorldMatrix() or GetWorldInverseTransposeMatrix() are called
+	XMStoreFloat4x4(&worldMatrix, XMMatrixIdentity());
 	XMStoreFloat4x4(&worldInverseTransposeMatrix, XMMatrixIdentity());
 }
 
@@ -19,6 +29,20 @@ void Transform::MoveAbsolute(float x, float y, float z)
 void Transform::MoveAbsolute(DirectX::XMFLOAT3 offset)
 {
 	MoveAbsolute(offset.x, offset.y, offset.z);
+}
+void Transform::MoveRelative(float x, float y, float z)
+{
+	XMVECTOR relOffset(x, y, z);
+	XMFLOAT3 absOffset;
+
+	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+
+	XMStoreFloat3(&absOffset, XMVector3Rotate(relOffset, rot));
+	SetLocation(absOffset);
+}
+void Transform::MoveRelative(DirectX::XMFLOAT3 offset)
+{
+	MoveRelative(offset.x, offset.y, offset.z);
 }
 void Transform::Rotate(float pitch, float yaw, float roll)
 {
@@ -41,6 +65,30 @@ void Transform::Scale(DirectX::XMFLOAT3 scale)
 XMFLOAT3 Transform::GetLocation() { return location; }
 XMFLOAT3 Transform::GetPitchYawRoll() { return rotation; }
 XMFLOAT3 Transform::GetScale() { return scale; }
+XMFLOAT3 Transform::GetRight()
+{
+	XMFLOAT3 right;
+	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+
+	XMStoreFloat3(&right, XMVector3Rotate(XMVECTOR(1, 0, 0), rot));
+	return right;
+}
+XMFLOAT3 Transform::GetUp()
+{
+	XMFLOAT3 up;
+	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+
+	XMStoreFloat3(&up, XMVector3Rotate(XMVECTOR(0, 1, 0), rot));
+	return up;
+}
+XMFLOAT3 Transform::GetForward()
+{
+	XMFLOAT3 forward;
+	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+
+	XMStoreFloat3(&forward, XMVector3Rotate(XMVECTOR(0, 0, 1), rot));
+	return forward;
+}
 XMFLOAT4X4 Transform::GetWorldMatrix()
 {
 	if(isWorldMatrixDirty)
@@ -55,13 +103,13 @@ XMFLOAT4X4 Transform::GetWorldMatrix()
 
 		XMMATRIX world = scale * rotation * translation;
 
-		XMStoreFloat4x4(&offset, world);
+		XMStoreFloat4x4(&worldMatrix, world);
 		XMStoreFloat4x4(&worldInverseTransposeMatrix, XMMatrixInverse(0, XMMatrixTranspose(world)));
 
 		isWorldMatrixDirty = false;
 	}
 
-	return offset;
+	return worldMatrix;
 }
 XMFLOAT4X4 Transform::GetWorldInverseTransposeMatrix()
 {

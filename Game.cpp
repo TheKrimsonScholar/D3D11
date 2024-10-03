@@ -86,7 +86,7 @@ void Game::Initialize()
 // --------------------------------------------------------
 Game::~Game()
 {
-	delete[] offset;
+	delete[] worldMatrix;
 	delete[] colorTint;
 
 	// Clean up for ImGui
@@ -395,7 +395,7 @@ void Game::BuildUI()
 		isDemoWindowHidden = !isDemoWindowHidden;
 
 	// Vertex offset and color tint controls
-	ImGui::DragFloat3("Offset", offset, 0.1f, -1, 1);
+	ImGui::DragFloat3("Offset", worldMatrix, 0.1f, -1, 1);
 	ImGui::ColorEdit4("ColorTint", colorTint);
 
 	if(ImGui::TreeNode("Meshes"))
@@ -488,7 +488,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	// Create data to be sent to the vertex shader
 	VSData vsData;
-	vsData.offset = XMFLOAT4X4(offset);
+	vsData.worldMatrix = XMFLOAT4X4(worldMatrix);
 	vsData.colorTint = XMFLOAT4(colorTint);
 
 	// Write to the constant buffer so it can be used by the vertex shader
@@ -507,8 +507,8 @@ void Game::Draw(float deltaTime, float totalTime)
 		//  - However, this needs to be done between EACH DrawIndexed() call
 		//     when drawing different geometry, so it's here as an example
 		UINT stride = sizeof(Vertex);
-		UINT offset = 0;
-		Graphics::Context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+		UINT worldMatrix = 0;
+		Graphics::Context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &worldMatrix);
 		Graphics::Context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 		// Tell Direct3D to draw

@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-Mesh::Mesh(std::string name, size_t vertexCount, Vertex vertices[], size_t indexCount, unsigned int indices[])
+Mesh::Mesh(std::string name, UINT vertexCount, Vertex vertices[], UINT indexCount, unsigned int indices[])
 {
 	this->name = name;
 
@@ -53,8 +53,8 @@ void Mesh::Draw()
 {
 	// Set vertex and index buffers to the ones used for this mesh
 	UINT stride = sizeof(Vertex); // Space between starting indices for each vertex
-	UINT offset = 0;
-	Graphics::Context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+	UINT worldMatrix = 0;
+	Graphics::Context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &worldMatrix);
 	Graphics::Context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 	// Start drawing the mesh

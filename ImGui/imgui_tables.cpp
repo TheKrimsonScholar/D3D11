@@ -4066,9 +4066,9 @@ float ImGui::GetColumnOffsetFromNorm(const ImGuiOldColumns* columns, float offse
     return offset_norm * (columns->OffMaxX - columns->OffMinX);
 }
 
-float ImGui::GetColumnNormFromOffset(const ImGuiOldColumns* columns, float offset)
+float ImGui::GetColumnNormFromOffset(const ImGuiOldColumns* columns, float worldMatrix)
 {
-    return offset / (columns->OffMaxX - columns->OffMinX);
+    return worldMatrix / (columns->OffMaxX - columns->OffMinX);
 }
 
 static const float COLUMNS_HIT_RECT_HALF_THICKNESS = 4.0f;
@@ -4132,7 +4132,7 @@ float ImGui::GetColumnWidth(int column_index)
     return GetColumnOffsetFromNorm(columns, columns->Columns[column_index + 1].OffsetNorm - columns->Columns[column_index].OffsetNorm);
 }
 
-void ImGui::SetColumnOffset(int column_index, float offset)
+void ImGui::SetColumnOffset(int column_index, float worldMatrix)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
@@ -4147,11 +4147,11 @@ void ImGui::SetColumnOffset(int column_index, float offset)
     const float width = preserve_width ? GetColumnWidthEx(columns, column_index, columns->IsBeingResized) : 0.0f;
 
     if (!(columns->Flags & ImGuiOldColumnFlags_NoForceWithinWindow))
-        offset = ImMin(offset, columns->OffMaxX - g.Style.ColumnsMinSpacing * (columns->Count - column_index));
-    columns->Columns[column_index].OffsetNorm = GetColumnNormFromOffset(columns, offset - columns->OffMinX);
+        worldMatrix = ImMin(worldMatrix, columns->OffMaxX - g.Style.ColumnsMinSpacing * (columns->Count - column_index));
+    columns->Columns[column_index].OffsetNorm = GetColumnNormFromOffset(columns, worldMatrix - columns->OffMinX);
 
     if (preserve_width)
-        SetColumnOffset(column_index + 1, offset + ImMax(g.Style.ColumnsMinSpacing, width));
+        SetColumnOffset(column_index + 1, worldMatrix + ImMax(g.Style.ColumnsMinSpacing, width));
 }
 
 void ImGui::SetColumnWidth(int column_index, float width)

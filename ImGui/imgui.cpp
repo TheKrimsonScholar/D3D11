@@ -2897,19 +2897,19 @@ static bool GetSkipItemForListClipping()
     return (g.CurrentTable ? g.CurrentTable->HostSkipItems : g.CurrentWindow->SkipItems);
 }
 
-static void ImGuiListClipper_SortAndFuseRanges(ImVector<ImGuiListClipperRange>& ranges, int offset = 0)
+static void ImGuiListClipper_SortAndFuseRanges(ImVector<ImGuiListClipperRange>& ranges, int worldMatrix = 0)
 {
-    if (ranges.Size - offset <= 1)
+    if (ranges.Size - worldMatrix <= 1)
         return;
 
     // Helper to order ranges and fuse them together if possible (bubble sort is fine as we are only sorting 2-3 entries)
-    for (int sort_end = ranges.Size - offset - 1; sort_end > 0; --sort_end)
-        for (int i = offset; i < sort_end + offset; ++i)
+    for (int sort_end = ranges.Size - worldMatrix - 1; sort_end > 0; --sort_end)
+        for (int i = worldMatrix; i < sort_end + worldMatrix; ++i)
             if (ranges[i].Min > ranges[i + 1].Min)
                 ImSwap(ranges[i], ranges[i + 1]);
 
     // Now fuse ranges together as much as possible.
-    for (int i = 1 + offset; i < ranges.Size; i++)
+    for (int i = 1 + worldMatrix; i < ranges.Size; i++)
     {
         IM_ASSERT(!ranges[i].PosToIndexConvert && !ranges[i - 1].PosToIndexConvert);
         if (ranges[i - 1].Max < ranges[i].Min)
@@ -3704,10 +3704,10 @@ void ImGui::RenderMouseCursor(ImVec2 base_pos, float base_scale, ImGuiMouseCurso
     for (ImGuiViewportP* viewport : g.Viewports)
     {
         // We scale cursor with current viewport/monitor, however Windows 10 for its own hardware cursor seems to be using a different scale factor.
-        ImVec2 offset, size, uv[4];
-        if (!font_atlas->GetMouseCursorTexData(mouse_cursor, &offset, &size, &uv[0], &uv[2]))
+        ImVec2 worldMatrix, size, uv[4];
+        if (!font_atlas->GetMouseCursorTexData(mouse_cursor, &worldMatrix, &size, &uv[0], &uv[2]))
             continue;
-        const ImVec2 pos = base_pos - offset;
+        const ImVec2 pos = base_pos - worldMatrix;
         const float scale = base_scale;
         if (!viewport->GetMainRect().Overlaps(ImRect(pos, pos + ImVec2(size.x + 2, size.y + 2) * scale)))
             continue;
@@ -7591,13 +7591,13 @@ void ImGui::FocusTopMostWindowUnderOne(ImGuiWindow* under_this_window, ImGuiWind
     if (under_this_window != NULL)
     {
         // Aim at root window behind us, if we are in a child window that's our own root (see #4640)
-        int offset = -1;
+        int worldMatrix = -1;
         while (under_this_window->Flags & ImGuiWindowFlags_ChildWindow)
         {
             under_this_window = under_this_window->ParentWindow;
-            offset = 0;
+            worldMatrix = 0;
         }
-        start_idx = FindWindowFocusIndex(under_this_window) + offset;
+        start_idx = FindWindowFocusIndex(under_this_window) + worldMatrix;
     }
     for (int i = start_idx; i >= 0; i--)
     {
@@ -7925,14 +7925,14 @@ void ImGui::SetWindowPos(ImGuiWindow* window, const ImVec2& pos, ImGuiCond cond)
     // Set
     const ImVec2 old_pos = window->Pos;
     window->Pos = ImTrunc(pos);
-    ImVec2 offset = window->Pos - old_pos;
-    if (offset.x == 0.0f && offset.y == 0.0f)
+    ImVec2 worldMatrix = window->Pos - old_pos;
+    if (worldMatrix.x == 0.0f && worldMatrix.y == 0.0f)
         return;
     MarkIniSettingsDirty(window);
-    window->DC.CursorPos += offset;         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least offset the cursor
-    window->DC.CursorMaxPos += offset;      // And more importantly we need to offset CursorMaxPos/CursorStartPos this so ContentSize calculation doesn't get affected.
-    window->DC.IdealMaxPos += offset;
-    window->DC.CursorStartPos += offset;
+    window->DC.CursorPos += worldMatrix;         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least offset the cursor
+    window->DC.CursorMaxPos += worldMatrix;      // And more importantly we need to offset CursorMaxPos/CursorStartPos this so ContentSize calculation doesn't get affected.
+    window->DC.IdealMaxPos += worldMatrix;
+    window->DC.CursorStartPos += worldMatrix;
 }
 
 void ImGui::SetWindowPos(const ImVec2& pos, ImGuiCond cond)
@@ -8244,12 +8244,12 @@ void ImGui::ActivateItemByID(ImGuiID id)
 
 // Note: this will likely be called ActivateItem() once we rework our Focus/Activation system!
 // But ActivateItem() should function without altering scroll/focus?
-void ImGui::SetKeyboardFocusHere(int offset)
+void ImGui::SetKeyboardFocusHere(int worldMatrix)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
-    IM_ASSERT(offset >= -1);    // -1 is allowed but not below
-    IMGUI_DEBUG_LOG_FOCUS("SetKeyboardFocusHere(%d) in window \"%s\"\n", offset, window->Name);
+    IM_ASSERT(worldMatrix >= -1);    // -1 is allowed but not below
+    IMGUI_DEBUG_LOG_FOCUS("SetKeyboardFocusHere(%d) in window \"%s\"\n", worldMatrix, window->Name);
 
     // It makes sense in the vast majority of cases to never interrupt a drag and drop.
     // When we refactor this function into ActivateItem() we may want to make this an option.
@@ -8265,15 +8265,15 @@ void ImGui::SetKeyboardFocusHere(int offset)
 
     ImGuiNavMoveFlags move_flags = ImGuiNavMoveFlags_IsTabbing | ImGuiNavMoveFlags_Activate | ImGuiNavMoveFlags_FocusApi | ImGuiNavMoveFlags_NoSetNavHighlight;
     ImGuiScrollFlags scroll_flags = window->Appearing ? ImGuiScrollFlags_KeepVisibleEdgeX | ImGuiScrollFlags_AlwaysCenterY : ImGuiScrollFlags_KeepVisibleEdgeX | ImGuiScrollFlags_KeepVisibleEdgeY;
-    NavMoveRequestSubmit(ImGuiDir_None, offset < 0 ? ImGuiDir_Up : ImGuiDir_Down, move_flags, scroll_flags); // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
-    if (offset == -1)
+    NavMoveRequestSubmit(ImGuiDir_None, worldMatrix < 0 ? ImGuiDir_Up : ImGuiDir_Down, move_flags, scroll_flags); // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
+    if (worldMatrix == -1)
     {
         NavMoveRequestResolveWithLastItem(&g.NavMoveResultLocal);
     }
     else
     {
         g.NavTabbingDir = 1;
-        g.NavTabbingCounter = offset + 1;
+        g.NavTabbingCounter = worldMatrix + 1;
     }
 }
 
@@ -9567,8 +9567,8 @@ void ImGui::UpdateMouseWheel()
         window->FontWindowScale = new_font_scale;
         if (window == window->RootWindow)
         {
-            const ImVec2 offset = window->Size * (1.0f - scale) * (g.IO.MousePos - window->Pos) / window->Size;
-            SetWindowPos(window, window->Pos + offset, 0);
+            const ImVec2 worldMatrix = window->Size * (1.0f - scale) * (g.IO.MousePos - window->Pos) / window->Size;
+            SetWindowPos(window, window->Pos + worldMatrix, 0);
             window->Size = ImTrunc(window->Size * scale);
             window->SizeFull = ImTrunc(window->SizeFull * scale);
         }
@@ -15742,7 +15742,7 @@ void ImGui::DebugNodeTabBar(ImGuiTabBar* tab_bar, const char* label)
             if (SmallButton("<")) { TabBarQueueReorder(tab_bar, tab, -1); } SameLine(0, 2);
             if (SmallButton(">")) { TabBarQueueReorder(tab_bar, tab, +1); } SameLine();
             Text("%02d%c Tab 0x%08X '%s' Offset: %.2f, Width: %.2f/%.2f",
-                tab_n, (tab->ID == tab_bar->SelectedTabId) ? '*' : ' ', tab->ID, TabBarGetTabName(tab_bar, tab), tab->offset, tab->Width, tab->ContentWidth);
+                tab_n, (tab->ID == tab_bar->SelectedTabId) ? '*' : ' ', tab->ID, TabBarGetTabName(tab_bar, tab), tab->worldMatrix, tab->Width, tab->ContentWidth);
             PopID();
         }
         TreePop();

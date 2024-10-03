@@ -27,7 +27,7 @@ private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Entity>> entities;
 
-	float* offset = new float[3] { 0.25f, 0, 0 };
+	float* worldMatrix = new float[3] { 0.25f, 0, 0 };
 	float* colorTint = new float[4] { 1, 1, 1, 1 };
 
 public:

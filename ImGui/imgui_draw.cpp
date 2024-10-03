@@ -2636,7 +2636,7 @@ int ImFontAtlas::AddCustomRectRegular(int width, int height)
     return CustomRects.Size - 1; // Return index
 }
 
-int ImFontAtlas::AddCustomRectFontGlyph(ImFont* font, ImWchar id, int width, int height, float advance_x, const ImVec2& offset)
+int ImFontAtlas::AddCustomRectFontGlyph(ImFont* font, ImWchar id, int width, int height, float advance_x, const ImVec2& worldMatrix)
 {
 #ifdef IMGUI_USE_WCHAR32
     IM_ASSERT(id <= IM_UNICODE_CODEPOINT_MAX);
@@ -2649,7 +2649,7 @@ int ImFontAtlas::AddCustomRectFontGlyph(ImFont* font, ImWchar id, int width, int
     r.Height = (unsigned short)height;
     r.GlyphID = id;
     r.GlyphAdvanceX = advance_x;
-    r.GlyphOffset = offset;
+    r.GlyphOffset = worldMatrix;
     r.Font = font;
     CustomRects.push_back(r);
     return CustomRects.Size - 1; // Return index
@@ -3146,14 +3146,14 @@ static void ImFontAtlasBuildRenderDefaultTexData(ImFontAtlas* atlas)
     {
         // Render 4 white pixels
         IM_ASSERT(r->Width == 2 && r->Height == 2);
-        const int offset = (int)r->X + (int)r->Y * w;
+        const int worldMatrix = (int)r->X + (int)r->Y * w;
         if (atlas->TexPixelsAlpha8 != NULL)
         {
-            atlas->TexPixelsAlpha8[offset] = atlas->TexPixelsAlpha8[offset + 1] = atlas->TexPixelsAlpha8[offset + w] = atlas->TexPixelsAlpha8[offset + w + 1] = 0xFF;
+            atlas->TexPixelsAlpha8[worldMatrix] = atlas->TexPixelsAlpha8[worldMatrix + 1] = atlas->TexPixelsAlpha8[worldMatrix + w] = atlas->TexPixelsAlpha8[worldMatrix + w + 1] = 0xFF;
         }
         else
         {
-            atlas->TexPixelsRGBA32[offset] = atlas->TexPixelsRGBA32[offset + 1] = atlas->TexPixelsRGBA32[offset + w] = atlas->TexPixelsRGBA32[offset + w + 1] = IM_COL32_WHITE;
+            atlas->TexPixelsRGBA32[worldMatrix] = atlas->TexPixelsRGBA32[worldMatrix + 1] = atlas->TexPixelsRGBA32[worldMatrix + w] = atlas->TexPixelsRGBA32[worldMatrix + w + 1] = IM_COL32_WHITE;
         }
     }
     atlas->TexUvWhitePixel = ImVec2((r->X + 0.5f) * atlas->TexUvScale.x, (r->Y + 0.5f) * atlas->TexUvScale.y);
