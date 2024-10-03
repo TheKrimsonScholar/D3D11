@@ -11,23 +11,25 @@ Camera::Camera(DirectX::XMFLOAT3 location, DirectX::XMFLOAT3 rotation, float asp
 
 void Camera::Update(float deltaTime)
 {
+	// Minecraft controls
 	if(Input::KeyDown('W'))
-		transform.MoveRelative(0, 0, deltaTime);
+		transform.MoveRelative(0, 0, deltaTime * movementSpeed);
 	if(Input::KeyDown('S'))
-		transform.MoveRelative(0, 0, -deltaTime);
+		transform.MoveRelative(0, 0, -deltaTime * movementSpeed);
 	if(Input::KeyDown('D'))
-		transform.MoveRelative(deltaTime, 0, 0);
+		transform.MoveRelative(deltaTime * movementSpeed, 0, 0);
 	if(Input::KeyDown('A'))
-		transform.MoveRelative(-deltaTime, 0, 0);
-	if(Input::KeyDown('E'))
-		transform.MoveAbsolute(0, deltaTime, 0);
-	if(Input::KeyDown('Q'))
-		transform.MoveAbsolute(0, -deltaTime, 0);
+		transform.MoveRelative(-deltaTime * movementSpeed, 0, 0);
+	if(Input::KeyDown(VK_SPACE))
+		transform.MoveAbsolute(0, deltaTime * movementSpeed, 0);
+	if(Input::KeyDown(VK_LSHIFT))
+		transform.MoveAbsolute(0, -deltaTime * movementSpeed, 0);
 
+	// Camera looking (while LMB is held)
 	if(Input::MouseLeftDown())
 	{
-		int deltaX = Input::GetMouseXDelta();
-		int deltaY = Input::GetMouseYDelta();
+		float deltaX = Input::GetMouseXDelta() * lookSpeed;
+		float deltaY = Input::GetMouseYDelta() * lookSpeed;
 
 		transform.Rotate(deltaY, deltaX, 0);
 
@@ -38,6 +40,7 @@ void Camera::Update(float deltaTime)
 			transform.SetRotation(XM_PIDIV2, transform.GetPitchYawRoll().y, transform.GetPitchYawRoll().z);
 	}
 
+	// Make sure the view matrix reflects any changes
 	UpdateViewMatrix();
 }
 
@@ -55,7 +58,7 @@ XMFLOAT4X4 Camera::UpdateViewMatrix()
 }
 XMFLOAT4X4 Camera::UpdateProjectionMatrix(float aspectRatio)
 {
-	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(fov, aspectRatio, nearDistance, farDistance));
+	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(XMConvertToRadians(fov), aspectRatio, nearDistance, farDistance));
 	return projMatrix;
 }
 

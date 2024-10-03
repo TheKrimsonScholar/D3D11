@@ -69,7 +69,13 @@ void Game::Initialize()
 
 	/* Create Camera */
 
-	camera = std::make_shared<Camera>(XMFLOAT3(0, 0, -1), XMFLOAT3(0, 0, 0), (float) Window::Width() / Window::Height(), 60.0f);
+	// First camera - this is the default active camera
+	cameras.push_back(std::make_shared<Camera>(XMFLOAT3(0, 0, -1), XMFLOAT3(0, 0, 0), (float) Window::Width() / Window::Height(), 60.0f));
+
+	// Low FOV camera from the left, looking 45 degrees to the right
+	cameras.push_back(std::make_shared<Camera>(XMFLOAT3(-1, 0, -1), XMFLOAT3(0, XM_PIDIV4, 0), (float) Window::Width() / Window::Height(), 45.0f));
+	// High FOV camera from the right, looking 45 degrees to the left
+	cameras.push_back(std::make_shared<Camera>(XMFLOAT3(1, 0, -1), XMFLOAT3(0, -XM_PIDIV4, 0), (float) Window::Width() / Window::Height(), 90.0f));
 
 	// Initialize ImGui
 	IMGUI_CHECKVERSION();
@@ -317,17 +323,25 @@ void Game::CreateGeometry()
 		new unsigned int[6] { 2, 1, 0, 2, 3, 1 }));
 
 	// Create an entity for each mesh
+	// Gradually offset Z to prevent z-fighting
+	float zOffset = 0;
 	for(std::shared_ptr<Mesh> m : meshes)
-		entities.push_back(std::make_shared<Entity>(m));
+	{
+		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(m);
+		newEntity->GetTransform()->MoveAbsolute(0, 0, zOffset);
+		entities.push_back(newEntity);
+
+		zOffset += 0.1f;
+	}
 
 	/* Create two extra star entities to show multiple entites using the same mesh */
 
 	std::shared_ptr<Entity> newStar1 = std::make_shared<Entity>(meshes[0]);
-	newStar1->GetTransform()->MoveAbsolute(0, 0.5f, 0);
+	newStar1->GetTransform()->MoveAbsolute(0, 0.5f, 1);
 	entities.push_back(newStar1);
 
 	std::shared_ptr<Entity> newStar2 = std::make_shared<Entity>(meshes[0]);
-	newStar2->GetTransform()->MoveAbsolute(0, -0.5f, 0);
+	newStar2->GetTransform()->MoveAbsolute(0, -0.5f, 2);
 	entities.push_back(newStar2);
 }
 
@@ -338,7 +352,7 @@ void Game::CreateGeometry()
 // --------------------------------------------------------
 void Game::OnResize()
 {
-	if(camera)
+	for(std::shared_ptr<Camera> camera : cameras)
 		camera->UpdateProjectionMatrix((float) Window::Width() / Window::Height());
 }
 
@@ -356,7 +370,7 @@ void Game::Update(float deltaTime, float totalTime)
 
 	BuildUI();
 
-	camera->Update(deltaTime);
+	GetCamera()->Update(deltaTime);
 
 	for(std::shared_ptr<Entity> e : entities)
 	{
@@ -401,19 +415,20 @@ void Game::BuildUI()
 	ImGui::ColorEdit4("Background Color", backgroundColor);
 
 	// Button to toggle visibility of the ImGui demo window
-	if (ImGui::Button("Toggle Demo Window"))
+	if(ImGui::Button("Toggle Demo Window"))
 		isDemoWindowHidden = !isDemoWindowHidden;
 
-	// Vertex offset and color tint controls
-	ImGui::DragFloat3("Offset", offset, 0.1f, -1, 1);
-	ImGui::ColorEdit4("ColorTint", colorTint);
+	// Slider control for setting the active camera
+	int index = activeCameraIndex;
+	ImGui::DragInt("Camera Index", &index, 0.01f, 0, cameras.size() - 1);
+	activeCameraIndex = index;
 
-	XMFLOAT3 location = camera->GetTransform().GetLocation();
-	XMFLOAT3 rotation = camera->GetTransform().GetPitchYawRoll();
-	XMFLOAT3 scale = camera->GetTransform().GetScale();
-	ImGui::DragFloat3("Camera Location", &location.x, 0.1f, -100, 100);
-	ImGui::DragFloat3("Camera Rotation", &rotation.x, 0.1f, -100, 100);
-	ImGui::DragFloat3("Camera Scale", &scale.x, 0.1f, -100, 100);
+	// Active camera information
+	XMFLOAT3 location = GetCamera()->GetTransform().GetLocation();
+	ImGui::Text("Location: (%.2f, %.2f, %.2f)", location.x, location.y, location.z);
+	XMFLOAT3 rotation = GetCamera()->GetTransform().GetPitchYawRoll();
+	ImGui::Text("Rotation (Radians): (%.2f, %.2f, %.2f)", rotation.x, rotation.y, rotation.z);
+	ImGui::Text("FOV (Degrees): %.1f", GetCamera()->GetFOV());
 
 	if(ImGui::TreeNode("Meshes"))
 	{
@@ -464,28 +479,7 @@ void Game::BuildUI()
 		ImGui::TreePop();
 	}
 
-	/* Controls for manipulating vertices */
-
-	ImGui::Text("Vertex 0");
-	ImGui::SliderFloat("Vertex 0: X", &vertices[0].Position.x, -1.0f, 1.0f);
-	ImGui::SliderFloat("Vertex 0: Y", &vertices[0].Position.y, -1.0f, 1.0f);
-	ImGui::SliderFloat("Vertex 0: Z", &vertices[0].Position.z, -1.0f, 1.0f);
-
-	ImGui::Text("Vertex 1");
-	ImGui::SliderFloat("Vertex 1: X", &vertices[1].Position.x, -1.0f, 1.0f);
-	ImGui::SliderFloat("Vertex 1: Y", &vertices[1].Position.y, -1.0f, 1.0f);
-	ImGui::SliderFloat("Vertex 1: Z", &vertices[1].Position.z, -1.0f, 1.0f);
-
-	ImGui::Text("Vertex 2");
-	ImGui::SliderFloat("Vertex 2: X", &vertices[2].Position.x, -1.0f, 1.0f);
-	ImGui::SliderFloat("Vertex 2: Y", &vertices[2].Position.y, -1.0f, 1.0f);
-	ImGui::SliderFloat("Vertex 2: Z", &vertices[2].Position.z, -1.0f, 1.0f);
-
 	ImGui::End();
-}
-void EntityUI()
-{
-
 }
 
 
@@ -545,7 +539,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		// Draw all entities
 		for(std::shared_ptr<Entity> e : entities)
-			e->Draw(constantBuffer, camera);
+			e->Draw(constantBuffer, GetCamera());
 	}
 
 	// Frame END

@@ -19,7 +19,8 @@ private:
 
 	bool isDemoWindowHidden;
 
-	std::shared_ptr<Camera> camera;
+	std::vector<std::shared_ptr<Camera>> cameras;
+	unsigned int activeCameraIndex;
 
 	Vertex vertices[3] = {
 		{ DirectX::XMFLOAT3(+0.0f, +0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }, // Red
@@ -45,6 +46,9 @@ public:
 	void Update(float deltaTime, float totalTime);
 	void Draw(float deltaTime, float totalTime);
 	void OnResize();
+
+	// Returns the currently in-use camera using the active camera index (returns nullptr if index is out of bounds).
+	std::shared_ptr<Camera> GetCamera() { return activeCameraIndex < cameras.size() ? cameras[activeCameraIndex] : nullptr; };
 
 private:
 	// Initialization helper methods - feel free to customize, combine, remove, etc.

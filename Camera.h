@@ -17,7 +17,7 @@ private:
 	float farDistance = 100.0f;
 
 	float movementSpeed = 1.0f;
-	float lookSpeed = 1.0f;
+	float lookSpeed = 0.01f;
 
 public:
 	Camera(DirectX::XMFLOAT3 location, DirectX::XMFLOAT3 rotation, float aspectRatio, float fov);
@@ -31,4 +31,5 @@ public:
 	DirectX::XMFLOAT4X4 GetProjectionMatrix();
 
 	Transform GetTransform() { return transform; }
+	float GetFOV() { return fov; }
 };

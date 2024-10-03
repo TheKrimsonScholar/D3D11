@@ -38,12 +38,14 @@ void Transform::MoveRelative(float x, float y, float z)
 }
 void Transform::MoveRelative(DirectX::XMFLOAT3 offset)
 {
+	// Get the absolute offset by rotating relative offset by this transform's rotation
 	XMVECTOR relOffset = XMLoadFloat3(&offset);
 	XMVECTOR rot = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
 	XMVECTOR absOffset = XMVector3Rotate(relOffset, rot);
 
 	XMVECTOR currentLocation = XMLoadFloat3(&location);
 
+	// Add absolute offset to current location
 	XMFLOAT3 destination;
 	XMStoreFloat3(&destination, currentLocation + absOffset);
 	SetLocation(destination);
@@ -71,6 +73,7 @@ XMFLOAT3 Transform::GetPitchYawRoll() { return rotation; }
 XMFLOAT3 Transform::GetScale() { return scale; }
 XMFLOAT3 Transform::GetRight()
 {
+	// Rotate the world right vector by this transform's rotation
 	XMFLOAT3 worldRight = XMFLOAT3(1, 0, 0);
 
 	XMFLOAT3 right;
@@ -81,6 +84,7 @@ XMFLOAT3 Transform::GetRight()
 }
 XMFLOAT3 Transform::GetUp()
 {
+	// Rotate the world up vector by this transform's rotation
 	XMFLOAT3 worldUp = XMFLOAT3(0, 1, 0);
 
 	XMFLOAT3 up;
@@ -91,6 +95,7 @@ XMFLOAT3 Transform::GetUp()
 }
 XMFLOAT3 Transform::GetForward()
 {
+	// Rotate the world forward vector by this transform's rotation
 	XMFLOAT3 worldForward = XMFLOAT3(0, 0, 1);
 
 	XMFLOAT3 forward;
