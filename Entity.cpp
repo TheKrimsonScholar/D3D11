@@ -1,29 +1,27 @@
 #include "Entity.h"
-#include "BufferStructs.h"
 #include "Graphics.h"
 
 using namespace DirectX;
 
-Entity::Entity(std::shared_ptr<Mesh> mesh) : 
-	colorTint(1, 1, 1, 1)
+Entity::Entity(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material) :
+	mesh(mesh), material(material)
 {
-	this->mesh = mesh;
+	
 }
 
-void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer, std::shared_ptr<Camera> camera)
+void Entity::Draw(std::shared_ptr<Camera> camera)
 {
-	// Create data to be sent to the vertex shader
-	VSData vsData;
-	vsData.worldMatrix = transform.GetWorldMatrix();
-	vsData.viewMatrix = camera->GetViewMatrix();
-	vsData.projMatrix = camera->GetProjectionMatrix();
-	vsData.colorTint = colorTint;
+	material->GetVertexShader()->SetShader();
+	material->GetPixelShader()->SetShader();
 
-	// Write to the constant buffer so it can be used by the vertex shader
-	D3D11_MAPPED_SUBRESOURCE mapped = {};
-	Graphics::Context->Map(constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	memcpy(mapped.pData, &vsData, sizeof(VSData));
-	Graphics::Context->Unmap(constantBuffer.Get(), 0);
+	// Create data to be sent to the vertex shader
+	std::shared_ptr<SimpleVertexShader> vs = material->GetVertexShader();
+	vs->SetMatrix4x4("worldMatrix", transform.GetWorldMatrix());
+	vs->SetMatrix4x4("viewMatrix", camera->GetViewMatrix());
+	vs->SetMatrix4x4("projMatrix", camera->GetProjectionMatrix());
+	vs->SetFloat4("colorTint", material->GetColor());
+
+	vs->CopyAllBufferData();
 
 	mesh->Draw();
 }

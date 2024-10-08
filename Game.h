@@ -7,10 +7,13 @@
 
 #include <DirectXMath.h>
 
+#include "SimpleShader.h"
+
 #include "Vertex.h"
 #include "Mesh.h"
 #include "Entity.h"
 #include "Camera.h"
+#include "Material.h"
 
 class Game
 {
@@ -28,6 +31,7 @@ private:
 		{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // Green
 	};
 
+	std::vector<std::shared_ptr<Material>> materials;
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Entity>> entities;
 
@@ -53,6 +57,7 @@ public:
 private:
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void LoadShaders();
+	void CreateMaterials();
 	void CreateGeometry();
 
 	// ImGUI implementation
@@ -69,9 +74,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
 
 	// Shaders and shader-related constructs
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
-
-	Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer;
+	std::shared_ptr<SimpleVertexShader> vertexShader;
+	std::shared_ptr<SimplePixelShader> pixelShader;
 };
