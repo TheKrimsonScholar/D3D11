@@ -18,12 +18,16 @@ private:
 
 public:
 	Mesh(std::string name, UINT vertexCount, Vertex vertices[], UINT indexCount, unsigned int indices[]);
+	Mesh(const char* filePath);
 	~Mesh();
+
+	void CreateBuffers();
+
+	void Draw();
 
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer() { return vertexBuffer; };
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetIndexBuffer() { return indexBuffer; };
 	size_t GetVertexCount() { return vertexCount; };
 	size_t GetIndexCount() { return indexCount; };
 	std::string GetName() { return name; };
-	void Draw();
 };

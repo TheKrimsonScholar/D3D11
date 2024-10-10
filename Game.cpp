@@ -72,9 +72,6 @@ void Game::Initialize()
 // --------------------------------------------------------
 Game::~Game()
 {
-	delete[] offset;
-	delete[] colorTint;
-
 	// Clean up for ImGui
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
@@ -127,125 +124,58 @@ void Game::CreateGeometry()
 	//    knowing the exact size (in pixels) of the image/window/etc.  
 	// - Long story short: Resizing the window also resizes the triangle,
 	//    since we're describing the triangle in terms of the window itself
-	/*Vertex vertices[] =
-	{
-		{ XMFLOAT3(+0.0f, +0.5f, +0.0f), red },
-		{ XMFLOAT3(+0.5f, -0.5f, +0.0f), blue },
-		{ XMFLOAT3(-0.5f, -0.5f, +0.0f), green },
-	};*/
-
-	// Set up indices, which tell us which vertices to use and in which order
-	// - This is redundant for just 3 vertices, but will be more useful later
-	// - Indices are technically not required if the vertices are in the buffer 
-	//    in the correct order and each one will be used exactly once
-	// - But just to see how it's done...
-	unsigned int indices[] = { 0, 1, 2 };
-
-
-	// Create a VERTEX BUFFER
-	// - This holds the vertex data of triangles for a single object
-	// - This buffer is created on the GPU, which is where the data needs to
-	//    be if we want the GPU to act on it (as in: draw it to the screen)
-	{
-		// First, we need to describe the buffer we want Direct3D to make on the GPU
-		//  - Note that this variable is created on the stack since we only need it once
-		//  - After the buffer is created, this description variable is unnecessary
-		D3D11_BUFFER_DESC vbd = {};
-		vbd.Usage = D3D11_USAGE_IMMUTABLE;	// Will NEVER change
-		vbd.ByteWidth = sizeof(Vertex) * 3;       // 3 = number of vertices in the buffer
-		vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // Tells Direct3D this is a vertex buffer
-		vbd.CPUAccessFlags = 0;	// Note: We cannot access the data from C++ (this is good)
-		vbd.MiscFlags = 0;
-		vbd.StructureByteStride = 0;
-
-		// Create the proper struct to hold the initial vertex data
-		// - This is how we initially fill the buffer with data
-		// - Essentially, we're specifying a pointer to the data to copy
-		D3D11_SUBRESOURCE_DATA initialVertexData = {};
-		initialVertexData.pSysMem = vertices; // pSysMem = Pointer to System Memory
-
-		// Actually create the buffer on the GPU with the initial data
-		// - Once we do this, we'll NEVER CHANGE DATA IN THE BUFFER AGAIN
-		Graphics::Device->CreateBuffer(&vbd, &initialVertexData, vertexBuffer.GetAddressOf());
-	}
-
-	// Create an INDEX BUFFER
-	// - This holds indices to elements in the vertex buffer
-	// - This is most useful when vertices are shared among neighboring triangles
-	// - This buffer is created on the GPU, which is where the data needs to
-	//    be if we want the GPU to act on it (as in: draw it to the screen)
-	{
-		// Describe the buffer, as we did above, with two major differences
-		//  - Byte Width (3 unsigned integers vs. 3 whole vertices)
-		//  - Bind Flag (used as an index buffer instead of a vertex buffer) 
-		D3D11_BUFFER_DESC ibd = {};
-		ibd.Usage = D3D11_USAGE_IMMUTABLE;	// Will NEVER change
-		ibd.ByteWidth = sizeof(unsigned int) * 3;	// 3 = number of indices in the buffer
-		ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;	// Tells Direct3D this is an index buffer
-		ibd.CPUAccessFlags = 0;	// Note: We cannot access the data from C++ (this is good)
-		ibd.MiscFlags = 0;
-		ibd.StructureByteStride = 0;
-
-		// Specify the initial data for this buffer, similar to above
-		D3D11_SUBRESOURCE_DATA initialIndexData = {};
-		initialIndexData.pSysMem = indices; // pSysMem = Pointer to System Memory
-
-		// Actually create the buffer with the initial data
-		// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
-		Graphics::Device->CreateBuffer(&ibd, &initialIndexData, indexBuffer.GetAddressOf());
-	}
 
 	// Star mesh
-	meshes.push_back(std::make_shared<Mesh>(
-		"Star",
-		11,
-		new Vertex[11]{
-		{ DirectX::XMFLOAT3(+0.0f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }, // 0
-		{ DirectX::XMFLOAT3(-0.5f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) }, // 1
-		{ DirectX::XMFLOAT3(+0.5f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) }, // 2
-		{ DirectX::XMFLOAT3(-0.375f, -0.625f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // 3
-		{ DirectX::XMFLOAT3(+0.375f, -0.625f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) }, // 4
-		{ DirectX::XMFLOAT3(-0.125f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) }, // 5
-		{ DirectX::XMFLOAT3(+0.125f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }, // 6
-		{ DirectX::XMFLOAT3(-0.25f, -0.125f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // 7
-		{ DirectX::XMFLOAT3(+0.25f, -0.125f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) }, // 8
-		{ DirectX::XMFLOAT3(+0.0f, -0.375f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) }, // 9
-		{ DirectX::XMFLOAT3(+0.0f, +0.0f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) } }, // 10
-		30,
-		new unsigned int[30] {
-			0, 6, 5,
-			1, 5, 7,
-			6, 2, 8,
-			7, 9, 3,
-			9, 8, 4,
-			5, 6, 10,
-			5, 10, 7,
-			6, 8, 10,
-			7, 10, 9,
-			9, 10, 8}));
+	//meshes.push_back(std::make_shared<Mesh>(
+	//	"Star",
+	//	11,
+	//	new Vertex[11]{
+	//	{ DirectX::XMFLOAT3(+0.0f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }, // 0
+	//	{ DirectX::XMFLOAT3(-0.5f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) }, // 1
+	//	{ DirectX::XMFLOAT3(+0.5f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) }, // 2
+	//	{ DirectX::XMFLOAT3(-0.375f, -0.625f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // 3
+	//	{ DirectX::XMFLOAT3(+0.375f, -0.625f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) }, // 4
+	//	{ DirectX::XMFLOAT3(-0.125f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) }, // 5
+	//	{ DirectX::XMFLOAT3(+0.125f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }, // 6
+	//	{ DirectX::XMFLOAT3(-0.25f, -0.125f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // 7
+	//	{ DirectX::XMFLOAT3(+0.25f, -0.125f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) }, // 8
+	//	{ DirectX::XMFLOAT3(+0.0f, -0.375f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) }, // 9
+	//	{ DirectX::XMFLOAT3(+0.0f, +0.0f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) } }, // 10
+	//	30,
+	//	new unsigned int[30] {
+	//		0, 6, 5,
+	//		1, 5, 7,
+	//		6, 2, 8,
+	//		7, 9, 3,
+	//		9, 8, 4,
+	//		5, 6, 10,
+	//		5, 10, 7,
+	//		6, 8, 10,
+	//		7, 10, 9,
+	//		9, 10, 8}));
 
-	// Triangle mesh
-	meshes.push_back(std::make_shared<Mesh>(
-		"Triangle",
-		3, 
-		new Vertex[3]{
-		{ DirectX::XMFLOAT3(+0.0f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) } }, 
-		3, 
-		new unsigned int[3] { 0, 1, 2 }));
+	//// Triangle mesh
+	//meshes.push_back(std::make_shared<Mesh>(
+	//	"Triangle",
+	//	3, 
+	//	new Vertex[3]{
+	//	{ DirectX::XMFLOAT3(+0.0f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+	//	{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+	//	{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) } }, 
+	//	3, 
+	//	new unsigned int[3] { 0, 1, 2 }));
 
-	// Quad mesh
-	meshes.push_back(std::make_shared<Mesh>(
-		"Quad",
-		4,
-		new Vertex[4]{
-		{ DirectX::XMFLOAT3(-0.75f, -0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(+0.75f, -0.75f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(-0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(+0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) } },
-		6,
-		new unsigned int[6] { 2, 1, 0, 2, 3, 1 }));
+	//// Quad mesh
+	//meshes.push_back(std::make_shared<Mesh>(
+	//	"Quad",
+	//	4,
+	//	new Vertex[4]{
+	//	{ DirectX::XMFLOAT3(-0.75f, -0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+	//	{ DirectX::XMFLOAT3(+0.75f, -0.75f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+	//	{ DirectX::XMFLOAT3(-0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+	//	{ DirectX::XMFLOAT3(+0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) } },
+	//	6,
+	//	new unsigned int[6] { 2, 1, 0, 2, 3, 1 }));
 
 	// Create an entity for each mesh
 	// Gradually offset Z to prevent z-fighting
@@ -261,13 +191,13 @@ void Game::CreateGeometry()
 
 	/* Create two extra star entities to show multiple entites using the same mesh */
 
-	std::shared_ptr<Entity> newStar1 = std::make_shared<Entity>(meshes[0], materials[1]);
+	/*std::shared_ptr<Entity> newStar1 = std::make_shared<Entity>(meshes[0], materials[1]);
 	newStar1->GetTransform()->MoveAbsolute(0, 0.5f, 1);
 	entities.push_back(newStar1);
 
 	std::shared_ptr<Entity> newStar2 = std::make_shared<Entity>(meshes[0], materials[2]);
 	newStar2->GetTransform()->MoveAbsolute(0, -0.5f, 2);
-	entities.push_back(newStar2);
+	entities.push_back(newStar2);*/
 }
 
 

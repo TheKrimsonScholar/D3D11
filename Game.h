@@ -25,18 +25,9 @@ private:
 	std::vector<std::shared_ptr<Camera>> cameras;
 	unsigned int activeCameraIndex;
 
-	Vertex vertices[3] = {
-		{ DirectX::XMFLOAT3(+0.0f, +0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }, // Red
-		{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) }, // Blue
-		{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // Green
-	};
-
 	std::vector<std::shared_ptr<Material>> materials;
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Entity>> entities;
-
-	float* offset = new float[3] { 0.25f, 0, 0 };
-	float* colorTint = new float[4] { 1, 1, 1, 1 };
 
 public:
 	// Basic OOP setup
