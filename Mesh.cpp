@@ -12,9 +12,9 @@ using namespace DirectX;
 Mesh::Mesh(std::string name, UINT vertexCount, Vertex vertices[], UINT indexCount, unsigned int indices[]) : 
 	name(name), vertexCount(vertexCount), indexCount(indexCount), vertices(vertices), indices(indices)
 {
-	CreateBuffers();
+	CreateBuffers(vertices, indices, vertexCount, indexCount);
 }
-Mesh::Mesh(const char* filePath)
+Mesh::Mesh(const wchar_t* filePath)
 {
 	// Author: Chris Cascioli
 	// Purpose: Basic .OBJ 3D model loading, supporting positions, uvs and normals
@@ -224,16 +224,20 @@ Mesh::Mesh(const char* filePath)
 	//    and detect duplicate vertices, but at that point it would be better to use a more
 	//    sophisticated model loading library like TinyOBJLoader or The Open Asset Importer Library
 
-	CreateBuffers();
+	CreateBuffers(&verts[0], &indices[0], vertCounter, indexCounter);
 }
 Mesh::~Mesh()
 {
-	delete[] vertices;
-	delete[] indices;
+	
 }
 
-void Mesh::CreateBuffers()
+void Mesh::CreateBuffers(Vertex* vertices, UINT* indices, int vertexCount, int indexCount)
 {
+	this->vertices = vertices;
+	this->indices = indices;
+	this->vertexCount = vertexCount;
+	this->indexCount = indexCount;
+
 	/* Create Vertex Buffer */
 
 	D3D11_BUFFER_DESC vbInfo;

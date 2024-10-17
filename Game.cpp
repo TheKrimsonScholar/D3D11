@@ -176,6 +176,7 @@ void Game::CreateGeometry()
 	//	{ DirectX::XMFLOAT3(+0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) } },
 	//	6,
 	//	new unsigned int[6] { 2, 1, 0, 2, 3, 1 }));
+	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str()));
 
 	// Create an entity for each mesh
 	// Gradually offset Z to prevent z-fighting
