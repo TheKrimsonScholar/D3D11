@@ -176,18 +176,25 @@ void Game::CreateGeometry()
 	//	{ DirectX::XMFLOAT3(+0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) } },
 	//	6,
 	//	new unsigned int[6] { 2, 1, 0, 2, 3, 1 }));
+	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str()));
+	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str()));
+	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str()));
 	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/sphere.obj").c_str()));
+	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/torus.obj").c_str()));
+	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad.obj").c_str()));
+	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad_double_sided.obj").c_str()));
 
-	// Create an entity for each mesh
-	// Gradually offset Z to prevent z-fighting
-	float zOffset = 0;
+	// Create 3 entities for each mesh
+	float spacing = 2.5f;
 	for(unsigned int i = 0; i < meshes.size(); i++)
 	{
-		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[i]);
-		newEntity->GetTransform()->MoveAbsolute(0, 0, zOffset);
-		entities.push_back(newEntity);
-
-		zOffset += 0.1f;
+		for(unsigned int j = 0; j < 3; j++)
+		{
+			std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[j]);
+			newEntity->GetTransform()->MoveAbsolute(-7 + i * spacing, 2.5f - j * spacing, 10.0f);
+			newEntity->GetTransform()->Scale(1.0f, 1.0f, 1.0f);
+			entities.push_back(newEntity);
+		}
 	}
 
 	/* Create two extra star entities to show multiple entites using the same mesh */
@@ -229,13 +236,7 @@ void Game::Update(float deltaTime, float totalTime)
 	GetCamera()->Update(deltaTime);
 
 	for(std::shared_ptr<Entity> e : entities)
-	{
-		e->GetTransform()->MoveAbsolute(cos(totalTime) * deltaTime, 0, 0);
-		e->GetTransform()->Rotate(0, 0, deltaTime);
-
-		float scaleAmount = 1 - (0.05f * deltaTime);
-		e->GetTransform()->Scale(scaleAmount, scaleAmount, scaleAmount);
-	}
+		e->GetTransform()->Rotate(0, deltaTime, 0);
 }
 
 void Game::UpdateImGui(float deltaTime, float totalTime)
