@@ -19,7 +19,7 @@ private:
 public:
 	Entity(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material);
 
-	void Draw(std::shared_ptr<Camera> camera);
+	void Draw(std::shared_ptr<Camera> camera, float totalTime);
 
 	Transform* GetTransform();
 	std::shared_ptr<Mesh> GetMesh();

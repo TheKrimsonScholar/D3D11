@@ -18,6 +18,13 @@
 class Game
 {
 private:
+	// Shaders and shader-related constructs
+	std::shared_ptr<SimpleVertexShader> vertexShader;
+	std::shared_ptr<SimplePixelShader> pixelShader;
+	std::shared_ptr<SimplePixelShader> normalPixelShader;
+	std::shared_ptr<SimplePixelShader> uvPixelShader;
+	std::shared_ptr<SimplePixelShader> customPixelShader;
+
 	float backgroundColor[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 
 	bool isDemoWindowHidden;
@@ -54,17 +61,4 @@ private:
 	// ImGUI implementation
 	void UpdateImGui(float deltaTime, float totalTime);
 	void BuildUI();
-
-	// Note the usage of ComPtr below
-	//  - This is a smart pointer for objects that abide by the
-	//     Component Object Model, which DirectX objects do
-	//  - More info here: https://github.com/Microsoft/DirectXTK/wiki/ComPtr
-
-	// Buffers to hold actual geometry data
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
-
-	// Shaders and shader-related constructs
-	std::shared_ptr<SimpleVertexShader> vertexShader;
-	std::shared_ptr<SimplePixelShader> pixelShader;
 };

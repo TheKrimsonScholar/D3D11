@@ -91,14 +91,19 @@ void Game::LoadShaders()
 {
 	vertexShader = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context, FixPath(L"VertexShader.cso").c_str());
 	pixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PixelShader.cso").c_str());
+	normalPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSNormal.cso").c_str());
+	uvPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSUV.cso").c_str());
+	customPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSCustom.cso").c_str());
 }
 
 void Game::CreateMaterials()
 {
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1)));
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 0, 1)));
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(0, 1, 0, 1)));
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(0, 0, 1, 1)));
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // White material
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 0, 1))); // Red material
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 1, 1))); // Purple material
+	materials.push_back(std::make_shared<Material>(vertexShader, normalPixelShader, XMFLOAT4(1, 1, 1, 1))); // Normal material
+	materials.push_back(std::make_shared<Material>(vertexShader, uvPixelShader, XMFLOAT4(1, 1, 1, 1))); // UV material
+	materials.push_back(std::make_shared<Material>(vertexShader, customPixelShader, XMFLOAT4(1, 1, 1, 1))); // Custom material
 }
 
 // --------------------------------------------------------
@@ -106,76 +111,7 @@ void Game::CreateMaterials()
 // --------------------------------------------------------
 void Game::CreateGeometry()
 {
-	// Create some temporary variables to represent colors
-	// - Not necessary, just makes things more readable
-	/*XMFLOAT4 red = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	XMFLOAT4 green = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);*/
-
-	// Set up the vertices of the triangle we would like to draw
-	// - We're going to copy this array, exactly as it exists in CPU memory
-	//    over to a Direct3D-controlled data structure on the GPU (the vertex buffer)
-	// - Note: Since we don't have a camera or really any concept of
-	//    a "3d world" yet, we're simply describing positions within the
-	//    bounds of how the rasterizer sees our screen: [-1 to +1] on X and Y
-	// - This means (0,0) is at the very center of the screen.
-	// - These are known as "Normalized Device Coordinates" or "Homogeneous 
-	//    Screen Coords", which are ways to describe a position without
-	//    knowing the exact size (in pixels) of the image/window/etc.  
-	// - Long story short: Resizing the window also resizes the triangle,
-	//    since we're describing the triangle in terms of the window itself
-
-	// Star mesh
-	//meshes.push_back(std::make_shared<Mesh>(
-	//	"Star",
-	//	11,
-	//	new Vertex[11]{
-	//	{ DirectX::XMFLOAT3(+0.0f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }, // 0
-	//	{ DirectX::XMFLOAT3(-0.5f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) }, // 1
-	//	{ DirectX::XMFLOAT3(+0.5f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) }, // 2
-	//	{ DirectX::XMFLOAT3(-0.375f, -0.625f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // 3
-	//	{ DirectX::XMFLOAT3(+0.375f, -0.625f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) }, // 4
-	//	{ DirectX::XMFLOAT3(-0.125f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) }, // 5
-	//	{ DirectX::XMFLOAT3(+0.125f, +0.25f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }, // 6
-	//	{ DirectX::XMFLOAT3(-0.25f, -0.125f, +0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }, // 7
-	//	{ DirectX::XMFLOAT3(+0.25f, -0.125f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) }, // 8
-	//	{ DirectX::XMFLOAT3(+0.0f, -0.375f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) }, // 9
-	//	{ DirectX::XMFLOAT3(+0.0f, +0.0f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) } }, // 10
-	//	30,
-	//	new unsigned int[30] {
-	//		0, 6, 5,
-	//		1, 5, 7,
-	//		6, 2, 8,
-	//		7, 9, 3,
-	//		9, 8, 4,
-	//		5, 6, 10,
-	//		5, 10, 7,
-	//		6, 8, 10,
-	//		7, 10, 9,
-	//		9, 10, 8}));
-
-	//// Triangle mesh
-	//meshes.push_back(std::make_shared<Mesh>(
-	//	"Triangle",
-	//	3, 
-	//	new Vertex[3]{
-	//	{ DirectX::XMFLOAT3(+0.0f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-	//	{ DirectX::XMFLOAT3(+0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-	//	{ DirectX::XMFLOAT3(-0.5f, -0.5f, +0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) } }, 
-	//	3, 
-	//	new unsigned int[3] { 0, 1, 2 }));
-
-	//// Quad mesh
-	//meshes.push_back(std::make_shared<Mesh>(
-	//	"Quad",
-	//	4,
-	//	new Vertex[4]{
-	//	{ DirectX::XMFLOAT3(-0.75f, -0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
-	//	{ DirectX::XMFLOAT3(+0.75f, -0.75f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-	//	{ DirectX::XMFLOAT3(-0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
-	//	{ DirectX::XMFLOAT3(+0.75f, +0.75f, +0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) } },
-	//	6,
-	//	new unsigned int[6] { 2, 1, 0, 2, 3, 1 }));
+	// Import meshes from file
 	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cube.obj").c_str()));
 	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/cylinder.obj").c_str()));
 	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/helix.obj").c_str()));
@@ -184,28 +120,51 @@ void Game::CreateGeometry()
 	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad.obj").c_str()));
 	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad_double_sided.obj").c_str()));
 
-	// Create 3 entities for each mesh
+	/* Create entities */
+	// Top row
 	float spacing = 2.5f;
 	for(unsigned int i = 0; i < meshes.size(); i++)
 	{
-		for(unsigned int j = 0; j < 3; j++)
-		{
-			std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[j]);
-			newEntity->GetTransform()->MoveAbsolute(-7 + i * spacing, 2.5f - j * spacing, 10.0f);
-			newEntity->GetTransform()->Scale(1.0f, 1.0f, 1.0f);
-			entities.push_back(newEntity);
-		}
+		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[3]); // Use the normal material
+		newEntity->GetTransform()->MoveAbsolute(-7 + i * spacing, 2.5f, 10.0f);
+		entities.push_back(newEntity);
+	}
+	// Middle row
+	for(unsigned int i = 0; i < meshes.size(); i++)
+	{
+		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[4]); // Use the UV material
+		newEntity->GetTransform()->MoveAbsolute(-7 + i * spacing, 2.5f - spacing, 10.0f);
+		entities.push_back(newEntity);
 	}
 
-	/* Create two extra star entities to show multiple entites using the same mesh */
+	// Bottom row
+	std::shared_ptr<Entity> cube = std::make_shared<Entity>(meshes[0], materials[0]);
+	cube->GetTransform()->MoveAbsolute(-7, 2.5f - 2 * spacing, 10.0f);
+	entities.push_back(cube);
 
-	/*std::shared_ptr<Entity> newStar1 = std::make_shared<Entity>(meshes[0], materials[1]);
-	newStar1->GetTransform()->MoveAbsolute(0, 0.5f, 1);
-	entities.push_back(newStar1);
+	std::shared_ptr<Entity> cylinder = std::make_shared<Entity>(meshes[1], materials[1]);
+	cylinder->GetTransform()->MoveAbsolute(-7 + spacing, 2.5f - 2 * spacing, 10.0f);
+	entities.push_back(cylinder);
 
-	std::shared_ptr<Entity> newStar2 = std::make_shared<Entity>(meshes[0], materials[2]);
-	newStar2->GetTransform()->MoveAbsolute(0, -0.5f, 2);
-	entities.push_back(newStar2);*/
+	std::shared_ptr<Entity> helix = std::make_shared<Entity>(meshes[2], materials[2]);
+	helix->GetTransform()->MoveAbsolute(-7 + 2 * spacing, 2.5f - 2 * spacing, 10.0f);
+	entities.push_back(helix);
+
+	std::shared_ptr<Entity> sphere = std::make_shared<Entity>(meshes[3], materials[5]);
+	sphere->GetTransform()->MoveAbsolute(-7 + 3 * spacing, 2.5f - 2 * spacing, 10.0f);
+	entities.push_back(sphere);
+
+	std::shared_ptr<Entity> torus = std::make_shared<Entity>(meshes[4], materials[2]);
+	torus->GetTransform()->MoveAbsolute(-7 + 4 * spacing, 2.5f - 2 * spacing, 10.0f);
+	entities.push_back(torus);
+
+	std::shared_ptr<Entity> quad = std::make_shared<Entity>(meshes[5], materials[1]);
+	quad->GetTransform()->MoveAbsolute(-7 + 5 * spacing, 2.5f - 2 * spacing, 10.0f);
+	entities.push_back(quad);
+
+	std::shared_ptr<Entity> quad2 = std::make_shared<Entity>(meshes[6], materials[0]);
+	quad2->GetTransform()->MoveAbsolute(-7 + 6 * spacing, 2.5f - 2 * spacing, 10.0f);
+	entities.push_back(quad2);
 }
 
 
@@ -277,7 +236,7 @@ void Game::BuildUI()
 
 	// Slider control for setting the active camera
 	int index = activeCameraIndex;
-	ImGui::DragInt("Camera Index", &index, 0.01f, 0, cameras.size() - 1);
+	ImGui::DragInt("Camera Index", &index, 0.01f, 0, (int) cameras.size() - 1);
 	activeCameraIndex = index;
 
 	// Active camera information
@@ -360,7 +319,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	{
 		// Draw all entities
 		for(std::shared_ptr<Entity> e : entities)
-			e->Draw(GetCamera());
+			e->Draw(GetCamera(), totalTime);
 	}
 
 	// Frame END

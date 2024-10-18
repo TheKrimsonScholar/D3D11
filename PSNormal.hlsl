@@ -1,3 +1,8 @@
+cbuffer DataFromCPU : register(b0)
+{
+    float4 colorTint;
+}
+
 struct VertexToPixel
 {
     float4 screenPosition : SV_POSITION;

@@ -9,7 +9,7 @@ Entity::Entity(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material) :
 	
 }
 
-void Entity::Draw(std::shared_ptr<Camera> camera)
+void Entity::Draw(std::shared_ptr<Camera> camera, float totalTime)
 {
 	std::shared_ptr<SimpleVertexShader> vs = material->GetVertexShader();
 	std::shared_ptr<SimplePixelShader> ps = material->GetPixelShader();
@@ -23,6 +23,7 @@ void Entity::Draw(std::shared_ptr<Camera> camera)
 	vs->SetMatrix4x4("projMatrix", camera->GetProjectionMatrix());
 	
 	ps->SetFloat4("colorTint", material->GetColor());
+	ps->SetFloat("totalTime", totalTime);
 
 	vs->CopyAllBufferData();
 	ps->CopyAllBufferData();
