@@ -39,6 +39,7 @@ private:
 
 	DirectX::XMFLOAT3 ambientLightColor { 0, 0, 0 };
 	Light directionalLight = {};
+	std::vector<Light> lights;
 
 public:
 	// Basic OOP setup

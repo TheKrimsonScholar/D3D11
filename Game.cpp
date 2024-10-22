@@ -39,6 +39,8 @@ void Game::Initialize()
 	directionalLight.Color = DirectX::XMFLOAT3(1, 0, 0.75f);
 	directionalLight.Intensity = 1.0f;
 
+	lights.push_back(directionalLight);
+
 	// Set initial graphics API state
 	//  - These settings persist until we change them
 	//  - Some of these, like the primitive topology & input layout, probably won't change
@@ -127,50 +129,14 @@ void Game::CreateGeometry()
 	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad_double_sided.obj").c_str()));
 
 	/* Create entities */
-	// Top row
-	float spacing = 2.5f;
+	float spacing = 1.5f;
 	for(unsigned int i = 0; i < meshes.size(); i++)
 	{
-		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[3]); // Use the normal material
-		newEntity->GetTransform()->MoveAbsolute(-7 + i * spacing, 2.5f, 10.0f);
+		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[0]); // Use white material
+		newEntity->GetTransform()->MoveAbsolute(-4.5f + i * spacing, -1.5f, 5.0f);
+		newEntity->GetTransform()->Scale(0.5f, 0.5f, 0.5f);
 		entities.push_back(newEntity);
 	}
-	// Middle row
-	for(unsigned int i = 0; i < meshes.size(); i++)
-	{
-		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[4]); // Use the UV material
-		newEntity->GetTransform()->MoveAbsolute(-7 + i * spacing, 2.5f - spacing, 10.0f);
-		entities.push_back(newEntity);
-	}
-
-	// Bottom row
-	std::shared_ptr<Entity> cube = std::make_shared<Entity>(meshes[0], materials[0]);
-	cube->GetTransform()->MoveAbsolute(-7, 2.5f - 2 * spacing, 10.0f);
-	entities.push_back(cube);
-
-	std::shared_ptr<Entity> cylinder = std::make_shared<Entity>(meshes[1], materials[1]);
-	cylinder->GetTransform()->MoveAbsolute(-7 + spacing, 2.5f - 2 * spacing, 10.0f);
-	entities.push_back(cylinder);
-
-	std::shared_ptr<Entity> helix = std::make_shared<Entity>(meshes[2], materials[2]);
-	helix->GetTransform()->MoveAbsolute(-7 + 2 * spacing, 2.5f - 2 * spacing, 10.0f);
-	entities.push_back(helix);
-
-	std::shared_ptr<Entity> sphere = std::make_shared<Entity>(meshes[3], materials[5]);
-	sphere->GetTransform()->MoveAbsolute(-7 + 3 * spacing, 2.5f - 2 * spacing, 10.0f);
-	entities.push_back(sphere);
-
-	std::shared_ptr<Entity> torus = std::make_shared<Entity>(meshes[4], materials[2]);
-	torus->GetTransform()->MoveAbsolute(-7 + 4 * spacing, 2.5f - 2 * spacing, 10.0f);
-	entities.push_back(torus);
-
-	std::shared_ptr<Entity> quad = std::make_shared<Entity>(meshes[5], materials[1]);
-	quad->GetTransform()->MoveAbsolute(-7 + 5 * spacing, 2.5f - 2 * spacing, 10.0f);
-	entities.push_back(quad);
-
-	std::shared_ptr<Entity> quad2 = std::make_shared<Entity>(meshes[6], materials[0]);
-	quad2->GetTransform()->MoveAbsolute(-7 + 6 * spacing, 2.5f - 2 * spacing, 10.0f);
-	entities.push_back(quad2);
 }
 
 
@@ -330,7 +296,9 @@ void Game::Draw(float deltaTime, float totalTime)
 			e->GetMaterial()->GetPixelShader()->SetFloat3("ambient", ambientLightColor);
 
 			// Give light data for directional light
-			e->GetMaterial()->GetPixelShader()->SetData("directionalLight", &directionalLight, sizeof(Light));
+			//e->GetMaterial()->GetPixelShader()->SetData("directionalLight", &directionalLight, sizeof(Light));
+			e->GetMaterial()->GetPixelShader()->SetData("lights", &lights[0], sizeof(Light) * lights.size());
+			e->GetMaterial()->GetPixelShader()->SetInt("lightCount", lights.size());
 
 			e->Draw(GetCamera(), totalTime);
 		}

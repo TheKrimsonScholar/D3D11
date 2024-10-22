@@ -9,9 +9,9 @@ cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("bu
 	float3 cameraLocation;
 	float3 ambient;
 
-	Light directionalLight;
-	//Light lights[MAX_LIGHTS];
-	//int lightCount;
+	//Light directionalLight;
+	Light lights[MAX_LIGHTS];
+	int lightCount;
 }
 
 // --------------------------------------------------------
@@ -27,9 +27,24 @@ float4 main(VertexToPixel input) : SV_TARGET
 {
 	input.normal = normalize(input.normal);
 
+	// Diffuse
+	float3 surfaceToLight = -normalize(directionalLight.Direction);
+	float3 diffuse = saturate(dot(input.normal, surfaceToLight)) * colorTint * directionalLight.Color * directionalLight.Intensity;
+
+	// Specular
+	float specular = 0;
+	float specularExp = (1.0f - roughness) * MAX_SPECULAR_EXPONENT;
+	if(specularExp > 0.05f)
+	{
+		float view = normalize(input.worldPosition - cameraLocation);
+		float reflection = reflect(directionalLight.Direction, input.normal);
+
+		specular = pow(saturate(dot(reflection, view)), specularExp);
+	}
+
 	// Just return the input color
 	// - This color (like most values passing through the rasterizer) is 
 	//   interpolated for each pixel between the corresponding vertices 
 	//   of the triangle we're rendering
-    return colorTint * float4(ambient, 1);
+    return colorTint * float4(ambient + diffuse + specular, 1);
 }

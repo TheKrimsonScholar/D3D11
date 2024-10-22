@@ -16,7 +16,7 @@ private:
 	float nearDistance = 0.1f;
 	float farDistance = 100.0f;
 
-	float movementSpeed = 1.0f;
+	float movementSpeed = 5.0f;
 	float lookSpeed = 0.01f;
 
 public:
