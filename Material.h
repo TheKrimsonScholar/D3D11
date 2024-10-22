@@ -14,14 +14,16 @@ private:
 	std::shared_ptr<SimplePixelShader> pixelShader;
 
 	DirectX::XMFLOAT4 color;
+	float roughness;
 
 public:
-	Material(std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader, DirectX::XMFLOAT4 color);
+	Material(std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader, DirectX::XMFLOAT4 color, float roughness);
 	~Material();
 
 	std::shared_ptr<SimpleVertexShader> GetVertexShader() { return vertexShader; };
 	std::shared_ptr<SimplePixelShader> GetPixelShader() { return pixelShader; };
 	DirectX::XMFLOAT4 GetColor() { return color; };
+	float GetRoughness() { return roughness; };
 
 	void SetVertexShader(std::shared_ptr<SimpleVertexShader> value) { vertexShader = value; };
 	void SetPixelShader(std::shared_ptr<SimplePixelShader> value) { pixelShader = value; };

@@ -19,10 +19,13 @@ void Entity::Draw(std::shared_ptr<Camera> camera, float totalTime)
 
 	// Create data to be sent to the vertex shader
 	vs->SetMatrix4x4("worldMatrix", transform.GetWorldMatrix());
+	vs->SetMatrix4x4("worldMatrix", transform.GetWorldInverseTransposeMatrix());
 	vs->SetMatrix4x4("viewMatrix", camera->GetViewMatrix());
 	vs->SetMatrix4x4("projMatrix", camera->GetProjectionMatrix());
 	
 	ps->SetFloat4("colorTint", material->GetColor());
+	ps->SetFloat("roughness", material->GetRoughness());
+	ps->SetFloat3("cameraLocation", camera->GetTransform().GetLocation());
 	ps->SetFloat("totalTime", totalTime);
 
 	vs->CopyAllBufferData();

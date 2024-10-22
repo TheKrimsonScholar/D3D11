@@ -36,6 +36,8 @@ private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Entity>> entities;
 
+	DirectX::XMFLOAT3 ambientLightColor { 0, 0, 0 };
+
 public:
 	// Basic OOP setup
 	Game() = default;
