@@ -1,11 +1,17 @@
 #include "ShaderStructs.hlsli"
 
+#define MAX_LIGHTS 64;
+
 cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("buffer 0")
 {
     float4 colorTint;
 	float roughness;
 	float3 cameraLocation;
 	float3 ambient;
+
+	Light directionalLight;
+	//Light lights[MAX_LIGHTS];
+	//int lightCount;
 }
 
 // --------------------------------------------------------
@@ -19,6 +25,8 @@ cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("bu
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
+	input.normal = normalize(input.normal);
+
 	// Just return the input color
 	// - This color (like most values passing through the rasterizer) is 
 	//   interpolated for each pixel between the corresponding vertices 

@@ -33,6 +33,12 @@ void Game::Initialize()
 	CreateMaterials();
 	CreateGeometry();
 
+	/* Directional Light Settings */
+	directionalLight.LightType = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight.Direction = DirectX::XMFLOAT3(1, -1, 0);
+	directionalLight.Color = DirectX::XMFLOAT3(1, 0, 0.75f);
+	directionalLight.Intensity = 1.0f;
+
 	// Set initial graphics API state
 	//  - These settings persist until we change them
 	//  - Some of these, like the primitive topology & input layout, probably won't change
@@ -322,6 +328,9 @@ void Game::Draw(float deltaTime, float totalTime)
 		{
 			// Manually set the color of ambient light on the entity material's pixel shader
 			e->GetMaterial()->GetPixelShader()->SetFloat3("ambient", ambientLightColor);
+
+			// Give light data for directional light
+			e->GetMaterial()->GetPixelShader()->SetData("directionalLight", &directionalLight, sizeof(Light));
 
 			e->Draw(GetCamera(), totalTime);
 		}

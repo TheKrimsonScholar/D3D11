@@ -14,6 +14,7 @@
 #include "Entity.h"
 #include "Camera.h"
 #include "Material.h"
+#include "Lights.h"
 
 class Game
 {
@@ -37,6 +38,7 @@ private:
 	std::vector<std::shared_ptr<Entity>> entities;
 
 	DirectX::XMFLOAT3 ambientLightColor { 0, 0, 0 };
+	Light directionalLight = {};
 
 public:
 	// Basic OOP setup

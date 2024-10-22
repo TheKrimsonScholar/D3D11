@@ -1,6 +1,25 @@
 #ifndef __SHADER_STRUCTS__
 #define __SHADER_STRUCTS__
 
+#define LIGHT_TYPE_DIRECTIONAL	0
+#define LIGHT_TYPE_POINT		1
+#define LIGHT_TYPE_SPOT			2
+
+#define MAX_SPECULAR_EXPONENT   256.0f
+
+struct Light
+{
+    int LightType;
+    float3 Direction;
+    float Range;
+    float3 Location;
+    float Intensity;
+    float3 Color;
+    float SpotInnerAngle;
+    float SpotOuterAngle;
+    float2 Padding;
+};
+
 // Struct representing a single vertex worth of data
 // - This should match the vertex definition in our C++ code
 // - By "match", I mean the size, order and number of members
