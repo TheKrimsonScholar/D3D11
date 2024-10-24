@@ -40,5 +40,5 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// - This color (like most values passing through the rasterizer) is 
 	//   interpolated for each pixel between the corresponding vertices 
 	//   of the triangle we're rendering
-    return float4(ambient, 1) + colorTint * float4(diffuseColor, 1) + float4(specularColor, 1);
+    return colorTint * float4(ambient + diffuseColor + specularColor, 1);
 }

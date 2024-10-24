@@ -14,7 +14,7 @@ float attenuate(Light light, float3 worldPosition)
 float3 diffuse(VertexToPixel input, Light light)
 {
     // Direction is represented differently based on light type
-    float3 lightDirection;
+    float3 lightDirection = 0;
     switch(light.LightType)
     {
         case LIGHT_TYPE_DIRECTIONAL:
@@ -38,7 +38,7 @@ float3 diffuse(VertexToPixel input, Light light)
 float3 specular(VertexToPixel input, Light light, float3 cameraLocation, float roughness)
 {
     // Direction is represented differently based on light type
-    float3 lightDirection;
+    float3 lightDirection = 0;
     switch(light.LightType)
     {
         case LIGHT_TYPE_DIRECTIONAL:
@@ -51,15 +51,16 @@ float3 specular(VertexToPixel input, Light light, float3 cameraLocation, float r
     }
     lightDirection = normalize(lightDirection);
 
+    float3 specularColor = 0;
     float specularExp = (1.0f - roughness) * MAX_SPECULAR_EXPONENT;
     if(specularExp > 0.05f)
     {
         float3 view = normalize(cameraLocation - input.worldPosition);
         float3 reflection = reflect(lightDirection, input.normal);
 
-        return pow(saturate(dot(reflection, view)), specularExp);
+        specularColor = light.Color * light.Intensity * pow(saturate(dot(reflection, view)), specularExp);
     }
-    return 0;
+    return specularColor;
 }
 
 #endif
