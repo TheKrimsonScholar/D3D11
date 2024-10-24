@@ -9,12 +9,12 @@
 struct Light
 {
 	int LightType;
-	DirectX::XMFLOAT3 Direction;
-	float Range;
-	DirectX::XMFLOAT3 Location;
-	float Intensity;
-	DirectX::XMFLOAT3 Color;
-	float SpotInnerAngle;
-	float SpotOuterAngle;
-	DirectX::XMFLOAT2 Padding;
+	DirectX::XMFLOAT3 Direction;	// Directional, Spot
+	float Range;					// Point, Spot
+	DirectX::XMFLOAT3 Location;		// Point, Spot
+	float Intensity;				// All
+	DirectX::XMFLOAT3 Color;		// All
+	float SpotInnerAngle;			// Spot: Inner cone angle (in radians)
+	float SpotOuterAngle;			// Spot: Outer cone angle (in radians)
+	DirectX::XMFLOAT2 Padding;		// Padding for alignment purposes
 };

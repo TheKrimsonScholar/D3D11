@@ -1,19 +1,15 @@
 #include "ShaderStructs.hlsli"
 #include "ShaderFunctions.hlsli"
 
-#define MAX_LIGHTS 64;
-
 cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("buffer 0")
 {
     float4 colorTint;
 	float roughness;
 	float3 cameraLocation;
 	float3 ambient;
-    float p;
 
-	//Light directionalLight;
-	Light lights[64];
 	int lightCount;
+	Light lights[64];
 }
 
 // --------------------------------------------------------
@@ -30,7 +26,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	input.normal = normalize(input.normal);
 
     float3 diffuseColor = 0;
-    float specularColor = 0;
+    float3 specularColor = 0;
 	for(int i = 0; i < lightCount; i++)
     {
 		// Diffuse
@@ -44,5 +40,5 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// - This color (like most values passing through the rasterizer) is 
 	//   interpolated for each pixel between the corresponding vertices 
 	//   of the triangle we're rendering
-    return colorTint * float4(ambient + diffuseColor + specularColor, 1);
+    return float4(ambient, 1) + colorTint * float4(diffuseColor, 1) + float4(specularColor, 1);
 }

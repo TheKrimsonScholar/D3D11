@@ -101,8 +101,8 @@ void Game::CreateMaterials()
 {
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 0, 1), 0.5f)); // Red material
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 1, 1), 1)); // Purple material
-	materials.push_back(std::make_shared<Material>(vertexShader, normalPixelShader, XMFLOAT4(1, 1, 1, 1), 0)); // Normal material
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 1, 1), 1.0f)); // Purple material
+	materials.push_back(std::make_shared<Material>(vertexShader, normalPixelShader, XMFLOAT4(1, 1, 1, 1), 0.0f)); // Normal material
 	materials.push_back(std::make_shared<Material>(vertexShader, uvPixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // UV material
 	materials.push_back(std::make_shared<Material>(vertexShader, customPixelShader, XMFLOAT4(1, 1, 1, 1), 0.75f)); // Custom material
 }
@@ -140,21 +140,66 @@ void Game::CreateLights()
 	directionalLight.Color = DirectX::XMFLOAT3(0.25f, 0, 0.25f);
 	directionalLight.Intensity = 1.0f;
 
+	Light directionalLight2 = {};
+	directionalLight2.LightType = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight2.Direction = DirectX::XMFLOAT3(0, 1, 0);
+	directionalLight2.Color = DirectX::XMFLOAT3(1, 0.5f, 0);
+	directionalLight2.Intensity = 1.0f;
+
+	Light directionalLight3 = {};
+	directionalLight3.LightType = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight3.Direction = DirectX::XMFLOAT3(-1, -1, 0);
+	directionalLight3.Color = DirectX::XMFLOAT3(0, 1, 0);
+	directionalLight3.Intensity = 0.5f;
+
 	Light pointLight1 = {};
 	pointLight1.LightType = LIGHT_TYPE_POINT;
-	pointLight1.Location = DirectX::XMFLOAT3(0, -1, 0);
+	pointLight1.Location = DirectX::XMFLOAT3(0, -1, 5);
 	pointLight1.Color = DirectX::XMFLOAT3(1, 0, 0);
 	pointLight1.Intensity = 1.0f;
 	pointLight1.Range = 4.0f;
 
 	Light pointLight2 = {};
 	pointLight2.LightType = LIGHT_TYPE_POINT;
-	pointLight2.Location = DirectX::XMFLOAT3(2.5f, 0, 0);
+	pointLight2.Location = DirectX::XMFLOAT3(2.5f, 0, 5);
 	pointLight2.Color = DirectX::XMFLOAT3(0, 0, 1);
 	pointLight2.Intensity = 1.0f;
-	pointLight2.Range = 0.5f;
+	pointLight2.Range = 4.0f;
+
+	/*directionalLight.LightType = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight.Direction = DirectX::XMFLOAT3(1, 0, 0);
+	directionalLight.Color = DirectX::XMFLOAT3(1, 0, 0);
+	directionalLight.Intensity = 1.0f;
+
+	Light directionalLight2 = {};
+	directionalLight2.LightType = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight2.Direction = DirectX::XMFLOAT3(0, -1, 0);
+	directionalLight2.Color = DirectX::XMFLOAT3(0, 1, 0);
+	directionalLight2.Intensity = 1.0f;
+
+	Light directionalLight3 = {};
+	directionalLight3.LightType = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight3.Direction = DirectX::XMFLOAT3(-1, 1, -0.5f);
+	directionalLight3.Color = DirectX::XMFLOAT3(0, 0, 1);
+	directionalLight3.Intensity = 1.0f;
+
+	Light pointLight1 = {};
+	pointLight1.LightType = LIGHT_TYPE_POINT;
+	pointLight1.Location = DirectX::XMFLOAT3(-1, -1.5f, 5);
+	pointLight1.Color = DirectX::XMFLOAT3(1, 1, 1);
+	pointLight1.Intensity = 1.0f;
+	pointLight1.Range = 10.0f;
+
+	Light pointLight2 = {};
+	pointLight2.LightType = LIGHT_TYPE_POINT;
+	pointLight2.Location = DirectX::XMFLOAT3(1, -1.5f, 5);
+	pointLight2.Color = DirectX::XMFLOAT3(1, 1, 1);
+	pointLight2.Intensity = 0.5f;
+	pointLight2.Range = 10.0f;*/
 
 	lights.push_back(directionalLight);
+	lights.push_back(directionalLight2);
+	lights.push_back(directionalLight3);
 	lights.push_back(pointLight1);
 	lights.push_back(pointLight2);
 }
@@ -335,11 +380,8 @@ void Game::Draw(float deltaTime, float totalTime)
 			e->GetMaterial()->GetPixelShader()->SetFloat3("ambient", ambientLightColor);
 
 			// Give light data for directional light
-			//e->GetMaterial()->GetPixelShader()->SetData("directionalLight", &directionalLight, sizeof(Light));
-			e->GetMaterial()->GetPixelShader()->SetData("lights", &lights[0], sizeof(Light) * lights.size());
-			e->GetMaterial()->GetPixelShader()->SetInt("lightCount", lights.size());
-
-			std::cout << lights.size() << std::endl;
+			e->GetMaterial()->GetPixelShader()->SetInt("lightCount", (int) lights.size());
+			e->GetMaterial()->GetPixelShader()->SetData("lights", &lights[0], sizeof(Light) * (int) lights.size());
 
 			e->Draw(GetCamera(), totalTime);
 		}
