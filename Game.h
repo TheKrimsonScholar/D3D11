@@ -37,7 +37,7 @@ private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Entity>> entities;
 
-	DirectX::XMFLOAT3 ambientLightColor { 0, 0, 0 };
+	DirectX::XMFLOAT3 ambientLightColor { 0.1f, 0.1f, 0.1f };
 	Light directionalLight = {};
 	std::vector<Light> lights;
 
@@ -62,6 +62,7 @@ private:
 	void LoadShaders();
 	void CreateMaterials();
 	void CreateGeometry();
+	void CreateLights();
 
 	// ImGUI implementation
 	void UpdateImGui(float deltaTime, float totalTime);

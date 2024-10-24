@@ -1,4 +1,5 @@
 #include "ShaderStructs.hlsli"
+#include "ShaderFunctions.hlsli"
 
 #define MAX_LIGHTS 64;
 
@@ -8,9 +9,10 @@ cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("bu
 	float roughness;
 	float3 cameraLocation;
 	float3 ambient;
+    float p;
 
 	//Light directionalLight;
-	Light lights[MAX_LIGHTS];
+	Light lights[64];
 	int lightCount;
 }
 
@@ -27,24 +29,20 @@ float4 main(VertexToPixel input) : SV_TARGET
 {
 	input.normal = normalize(input.normal);
 
-	// Diffuse
-	float3 surfaceToLight = -normalize(directionalLight.Direction);
-	float3 diffuse = saturate(dot(input.normal, surfaceToLight)) * colorTint * directionalLight.Color * directionalLight.Intensity;
+    float3 diffuseColor = 0;
+    float specularColor = 0;
+	for(int i = 0; i < lightCount; i++)
+    {
+		// Diffuse
+        diffuseColor += diffuse(input, lights[i]);
 
-	// Specular
-	float specular = 0;
-	float specularExp = (1.0f - roughness) * MAX_SPECULAR_EXPONENT;
-	if(specularExp > 0.05f)
-	{
-		float view = normalize(input.worldPosition - cameraLocation);
-		float reflection = reflect(directionalLight.Direction, input.normal);
-
-		specular = pow(saturate(dot(reflection, view)), specularExp);
-	}
+	    // Specular
+        specularColor += specular(input, lights[i], cameraLocation, roughness);
+    }
 
 	// Just return the input color
 	// - This color (like most values passing through the rasterizer) is 
 	//   interpolated for each pixel between the corresponding vertices 
 	//   of the triangle we're rendering
-    return colorTint * float4(ambient + diffuse + specular, 1);
+    return colorTint * float4(ambient + diffuseColor + specularColor, 1);
 }

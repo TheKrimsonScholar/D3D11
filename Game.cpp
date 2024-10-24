@@ -32,14 +32,7 @@ void Game::Initialize()
 	LoadShaders();
 	CreateMaterials();
 	CreateGeometry();
-
-	/* Directional Light Settings */
-	directionalLight.LightType = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight.Direction = DirectX::XMFLOAT3(1, -1, 0);
-	directionalLight.Color = DirectX::XMFLOAT3(1, 0, 0.75f);
-	directionalLight.Intensity = 1.0f;
-
-	lights.push_back(directionalLight);
+	CreateLights();
 
 	// Set initial graphics API state
 	//  - These settings persist until we change them
@@ -106,7 +99,7 @@ void Game::LoadShaders()
 
 void Game::CreateMaterials()
 {
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.5f)); // White material
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 0, 1), 0.5f)); // Red material
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 1, 1), 1)); // Purple material
 	materials.push_back(std::make_shared<Material>(vertexShader, normalPixelShader, XMFLOAT4(1, 1, 1, 1), 0)); // Normal material
@@ -137,6 +130,33 @@ void Game::CreateGeometry()
 		newEntity->GetTransform()->Scale(0.5f, 0.5f, 0.5f);
 		entities.push_back(newEntity);
 	}
+}
+
+void Game::CreateLights()
+{
+	/* Directional Light Settings */
+	directionalLight.LightType = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight.Direction = DirectX::XMFLOAT3(1, -1, 0);
+	directionalLight.Color = DirectX::XMFLOAT3(0.25f, 0, 0.25f);
+	directionalLight.Intensity = 1.0f;
+
+	Light pointLight1 = {};
+	pointLight1.LightType = LIGHT_TYPE_POINT;
+	pointLight1.Location = DirectX::XMFLOAT3(0, -1, 0);
+	pointLight1.Color = DirectX::XMFLOAT3(1, 0, 0);
+	pointLight1.Intensity = 1.0f;
+	pointLight1.Range = 4.0f;
+
+	Light pointLight2 = {};
+	pointLight2.LightType = LIGHT_TYPE_POINT;
+	pointLight2.Location = DirectX::XMFLOAT3(2.5f, 0, 0);
+	pointLight2.Color = DirectX::XMFLOAT3(0, 0, 1);
+	pointLight2.Intensity = 1.0f;
+	pointLight2.Range = 0.5f;
+
+	lights.push_back(directionalLight);
+	lights.push_back(pointLight1);
+	lights.push_back(pointLight2);
 }
 
 
@@ -194,8 +214,6 @@ void Game::UpdateImGui(float deltaTime, float totalTime)
 
 void Game::BuildUI()
 {
-	static int sliderValue = 50;
-
 	ImGui::Begin("Custom Window");
 
 	ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
@@ -205,6 +223,27 @@ void Game::BuildUI()
 	// Button to toggle visibility of the ImGui demo window
 	if(ImGui::Button("Toggle Demo Window"))
 		isDemoWindowHidden = !isDemoWindowHidden;
+
+	if(ImGui::TreeNode("Lights"))
+	{
+		for(int i = 0; i < lights.size(); i++)
+		{
+			ImGui::PushID(&lights[i]);
+			if(ImGui::TreeNode("Light", "Light %i", i))
+			{
+				ImGui::DragInt("Light Type (0: Dir, 1: Point, 2: Spot)", &lights[i].LightType, 0.1f, 0, 2);
+
+				ImGui::DragFloat3("Location", &lights[i].Location.x, 0.01f, -10, 10);
+				ImGui::DragFloat3("Color", &lights[i].Color.x, 0.01f, 0, 1);
+				ImGui::DragFloat3("Direction", &lights[i].Direction.x, 0.01f, -1, 1);
+				ImGui::DragFloat("Intensity", &lights[i].Intensity, 0.01f, 0, 10);
+				ImGui::DragFloat("Range", &lights[i].Range, 0.01f, 0, 10);
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
+		}
+		ImGui::TreePop();
+	}
 
 	// Slider control for setting the active camera
 	int index = activeCameraIndex;
@@ -299,6 +338,8 @@ void Game::Draw(float deltaTime, float totalTime)
 			//e->GetMaterial()->GetPixelShader()->SetData("directionalLight", &directionalLight, sizeof(Light));
 			e->GetMaterial()->GetPixelShader()->SetData("lights", &lights[0], sizeof(Light) * lights.size());
 			e->GetMaterial()->GetPixelShader()->SetInt("lightCount", lights.size());
+
+			std::cout << lights.size() << std::endl;
 
 			e->Draw(GetCamera(), totalTime);
 		}
