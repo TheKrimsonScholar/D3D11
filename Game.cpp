@@ -7,6 +7,9 @@
 #include <memory>
 #include <iostream>
 
+// From DirectX Tool Kit
+#include "WICTextureLoader.h"
+
 #include <DirectXMath.h>
 
 // Needed for a helper function to load pre-compiled shader files
@@ -26,6 +29,8 @@ using namespace DirectX;
 // --------------------------------------------------------
 void Game::Initialize()
 {
+	CreateWICTextureFromFile(Graphics::Device.Get(), FixPath(L"../../../Assets/Specular Maps/brokentiles.png").c_str(), 0, textureSRV.GetAddressOf());
+
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
@@ -376,6 +381,10 @@ void Game::Draw(float deltaTime, float totalTime)
 		// Draw all entities
 		for(std::shared_ptr<Entity> e : entities)
 		{
+			// Set the color texture using the SRV
+			e->GetMaterial()->GetPixelShader()->SetShaderResourceView("SurfaceColorTexture", textureSRV);
+			e->GetMaterial()->GetPixelShader()->SetSamplerState("BasicSampler", samplerOptions);
+
 			// Manually set the color of ambient light on the entity material's pixel shader
 			e->GetMaterial()->GetPixelShader()->SetFloat3("ambient", ambientLightColor);
 

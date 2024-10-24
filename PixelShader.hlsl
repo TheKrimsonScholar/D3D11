@@ -12,6 +12,12 @@ cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("bu
 	Light lights[64];
 }
 
+// Define textures
+Texture2D SurfaceColorTexture : register(t0);
+
+// Set of options for sampling
+SamplerState BasicSampler : register(s0);
+
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
 // 
@@ -23,6 +29,9 @@ cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("bu
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
+	float4 colorFromTexture = SurfaceColorTexture.Sample(BasicSampler, input.uv);
+	return colorFromTexture;
+
 	input.normal = normalize(input.normal);
 
     float3 diffuseColor = 0;
