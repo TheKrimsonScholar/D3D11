@@ -27,7 +27,7 @@ private:
 	std::shared_ptr<SimplePixelShader> customPixelShader;
 
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureSRV;
-	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerOptions;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 
 	float backgroundColor[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 

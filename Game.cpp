@@ -29,7 +29,19 @@ using namespace DirectX;
 // --------------------------------------------------------
 void Game::Initialize()
 {
-	CreateWICTextureFromFile(Graphics::Device.Get(), FixPath(L"../../../Assets/Specular Maps/brokentiles.png").c_str(), 0, textureSRV.GetAddressOf());
+	/* The overload that takes the device context also makes mipmaps */
+	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Specular Maps/brokentiles.png").c_str(), 0, textureSRV.GetAddressOf());
+
+	D3D11_SAMPLER_DESC samplerDesc = {};
+	// Clamp coordinate values so texture stretches from extremes
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	samplerDesc.MaxAnisotropy = 16; // Must be power of 2, 0-16 - higher is better
+
+	Graphics::Device->CreateSamplerState(&samplerDesc, sampler.GetAddressOf());
 
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
@@ -383,7 +395,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		{
 			// Set the color texture using the SRV
 			e->GetMaterial()->GetPixelShader()->SetShaderResourceView("SurfaceColorTexture", textureSRV);
-			e->GetMaterial()->GetPixelShader()->SetSamplerState("BasicSampler", samplerOptions);
+			e->GetMaterial()->GetPixelShader()->SetSamplerState("BasicSampler", sampler);
 
 			// Manually set the color of ambient light on the entity material's pixel shader
 			e->GetMaterial()->GetPixelShader()->SetFloat3("ambient", ambientLightColor);
