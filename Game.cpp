@@ -30,7 +30,13 @@ using namespace DirectX;
 void Game::Initialize()
 {
 	/* The overload that takes the device context also makes mipmaps */
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureSRV;
 	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Specular Maps/brokentiles.png").c_str(), 0, textureSRV.GetAddressOf());
+	textureSRVs.insert({ "brokentiles.png", textureSRV });
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> specularSRV;
+	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Specular Maps/brokentiles_specular.png").c_str(), 0, specularSRV.GetAddressOf());
+	specularSRVs.insert({ "brokentiles_specular.png", specularSRV });
 
 	D3D11_SAMPLER_DESC samplerDesc = {};
 	// Clamp coordinate values so texture stretches from extremes
@@ -122,6 +128,10 @@ void Game::CreateMaterials()
 	materials.push_back(std::make_shared<Material>(vertexShader, normalPixelShader, XMFLOAT4(1, 1, 1, 1), 0.0f)); // Normal material
 	materials.push_back(std::make_shared<Material>(vertexShader, uvPixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // UV material
 	materials.push_back(std::make_shared<Material>(vertexShader, customPixelShader, XMFLOAT4(1, 1, 1, 1), 0.75f)); // Custom material
+
+	materials[0]->AddTextureSRV("SurfaceColorTexture", textureSRVs["brokentiles.png"]);
+	materials[0]->AddTextureSRV("SpecularMap", specularSRVs["brokentiles_specular.png"]);
+	materials[0]->AddSampler("BasicSampler", sampler);
 }
 
 // --------------------------------------------------------
@@ -393,10 +403,6 @@ void Game::Draw(float deltaTime, float totalTime)
 		// Draw all entities
 		for(std::shared_ptr<Entity> e : entities)
 		{
-			// Set the color texture using the SRV
-			e->GetMaterial()->GetPixelShader()->SetShaderResourceView("SurfaceColorTexture", textureSRV);
-			e->GetMaterial()->GetPixelShader()->SetSamplerState("BasicSampler", sampler);
-
 			// Manually set the color of ambient light on the entity material's pixel shader
 			e->GetMaterial()->GetPixelShader()->SetFloat3("ambient", ambientLightColor);
 

@@ -30,9 +30,8 @@ SamplerState BasicSampler : register(s0);
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
-	float3 colorFromTexture = SurfaceColorTexture.Sample(BasicSampler, input.uv).rgb * colorTint;
+	float3 textureColor = SurfaceColorTexture.Sample(BasicSampler, input.uv).rgb * colorTint.rgb;
 	float specularScale = SpecularMap.Sample(BasicSampler, input.uv).r;
-	//return colorFromTexture.rgbb;
 
 	input.normal = normalize(input.normal);
 
@@ -51,5 +50,5 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// - This color (like most values passing through the rasterizer) is 
 	//   interpolated for each pixel between the corresponding vertices 
 	//   of the triangle we're rendering
-    return colorFromTexture.rgbb * float4(ambient + diffuseColor + specularColor, 1);
+    return textureColor.rgbb * float4(ambient + diffuseColor + specularColor, 1);
 }

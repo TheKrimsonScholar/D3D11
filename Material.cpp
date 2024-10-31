@@ -9,3 +9,24 @@ Material::~Material()
 {
 
 }
+
+void Material::PrepareMaterial()
+{
+	for(auto srv : textureSRVs)
+		pixelShader->SetShaderResourceView(srv.first.c_str(), srv.second);
+	for(auto sampler : samplers)
+		pixelShader->SetSamplerState(sampler.first.c_str(), sampler.second);
+}
+
+void Material::AddTextureSRV(std::string identifier, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv)
+{
+	textureSRVs.insert({identifier, srv});
+}
+void Material::AddSpecularSRV(std::string identifier, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv)
+{
+	specularSRVs.insert({identifier, srv});
+}
+void Material::AddSampler(std::string identifier, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler)
+{
+	samplers.insert({identifier, sampler});
+}

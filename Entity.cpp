@@ -17,6 +17,8 @@ void Entity::Draw(std::shared_ptr<Camera> camera, float totalTime)
 	material->GetVertexShader()->SetShader();
 	material->GetPixelShader()->SetShader();
 
+	material->PrepareMaterial();
+
 	// Create data to be sent to the vertex shader
 	vs->SetMatrix4x4("worldMatrix", transform.GetWorldMatrix());
 	vs->SetMatrix4x4("worldInvTranspose", transform.GetWorldInverseTransposeMatrix());

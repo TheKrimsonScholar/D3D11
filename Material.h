@@ -13,12 +13,22 @@ private:
 	std::shared_ptr<SimpleVertexShader> vertexShader;
 	std::shared_ptr<SimplePixelShader> pixelShader;
 
+	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> textureSRVs;
+	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> specularSRVs;
+	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11SamplerState>> samplers;
+
 	DirectX::XMFLOAT4 color;
 	float roughness;
 
 public:
 	Material(std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader, DirectX::XMFLOAT4 color, float roughness);
 	~Material();
+
+	void PrepareMaterial();
+
+	void AddTextureSRV(std::string identifier, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv);
+	void AddSpecularSRV(std::string identifier, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv);
+	void AddSampler(std::string identifier, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler);
 
 	std::shared_ptr<SimpleVertexShader> GetVertexShader() { return vertexShader; };
 	std::shared_ptr<SimplePixelShader> GetPixelShader() { return pixelShader; };
