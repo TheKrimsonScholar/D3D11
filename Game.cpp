@@ -29,14 +29,25 @@ using namespace DirectX;
 // --------------------------------------------------------
 void Game::Initialize()
 {
-	/* The overload that takes the device context also makes mipmaps */
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureSRV;
-	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Specular Maps/brokentiles.png").c_str(), 0, textureSRV.GetAddressOf());
-	textureSRVs.insert({ "brokentiles.png", textureSRV });
+	const std::vector<std::wstring> texturePaths = 
+	{
+		L"../../Assets/Specular Maps/brokentiles.png",
+		L"../../Assets/Specular Maps/brokentiles_specular.png"
+	};
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> specularSRV;
-	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Specular Maps/brokentiles_specular.png").c_str(), 0, specularSRV.GetAddressOf());
-	specularSRVs.insert({ "brokentiles_specular.png", specularSRV });
+	for(std::wstring texturePath : texturePaths)
+	{
+		/* The overload that takes the device context also makes mipmaps */
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureSRV;
+		CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(texturePath).c_str(), 0, textureSRV.GetAddressOf());
+		/*const char* name = std::strchr("Maps/brokentiles.png", '/') + 1;
+		std::cout << name << std::endl;*/
+		textureSRVs.insert({ "brokentiles.png", textureSRV });
+	}
+
+	/*Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> specularSRV;
+	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(texturePaths[1]).c_str(), 0, textureSRV.GetAddressOf());
+	textureSRVs.insert({ "brokentiles_specular.png", textureSRV });*/
 
 	D3D11_SAMPLER_DESC samplerDesc = {};
 	// Clamp coordinate values so texture stretches from extremes
@@ -130,7 +141,7 @@ void Game::CreateMaterials()
 	materials.push_back(std::make_shared<Material>(vertexShader, customPixelShader, XMFLOAT4(1, 1, 1, 1), 0.75f)); // Custom material
 
 	materials[0]->AddTextureSRV("SurfaceColorTexture", textureSRVs["brokentiles.png"]);
-	materials[0]->AddTextureSRV("SpecularMap", specularSRVs["brokentiles_specular.png"]);
+	materials[0]->AddTextureSRV("SpecularMap", textureSRVs["brokentiles_specular.png"]);
 	materials[0]->AddSampler("BasicSampler", sampler);
 }
 

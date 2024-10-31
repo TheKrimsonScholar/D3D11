@@ -22,10 +22,6 @@ void Material::AddTextureSRV(std::string identifier, Microsoft::WRL::ComPtr<ID3D
 {
 	textureSRVs.insert({identifier, srv});
 }
-void Material::AddSpecularSRV(std::string identifier, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv)
-{
-	specularSRVs.insert({identifier, srv});
-}
 void Material::AddSampler(std::string identifier, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler)
 {
 	samplers.insert({identifier, sampler});
