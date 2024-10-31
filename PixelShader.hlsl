@@ -5,6 +5,8 @@ cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("bu
 {
     float4 colorTint;
 	float roughness;
+    float2 uvScale;
+    float2 uvOffset;
 	float3 cameraLocation;
 	float3 ambient;
 
@@ -30,8 +32,12 @@ SamplerState BasicSampler : register(s0);
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
-	float3 textureColor = SurfaceColorTexture.Sample(BasicSampler, input.uv).rgb * colorTint.rgb;
-	float specularScale = SpecularMap.Sample(BasicSampler, input.uv).r;
+    // Apply UV transformations based on material settings
+    input.uv *= uvScale;
+    input.uv += uvOffset;
+	
+	float3 textureColor = SurfaceColorTexture.Sample(BasicSampler, input.uv + uvOffset).rgb * colorTint.rgb;
+	float specularScale = SpecularMap.Sample(BasicSampler, input.uv + uvOffset).r;
 
 	input.normal = normalize(input.normal);
 

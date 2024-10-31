@@ -26,7 +26,7 @@ private:
 	std::shared_ptr<SimplePixelShader> uvPixelShader;
 	std::shared_ptr<SimplePixelShader> customPixelShader;
 
-	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> textureSRVs;
+	std::unordered_map<std::wstring, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> textureSRVs;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 
 	float backgroundColor[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
@@ -43,6 +43,8 @@ private:
 	DirectX::XMFLOAT3 ambientLightColor { 0.1f, 0.1f, 0.1f };
 	Light directionalLight = {};
 	std::vector<Light> lights;
+
+	float totalTime;
 
 public:
 	// Basic OOP setup
@@ -62,6 +64,7 @@ public:
 
 private:
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
+	void LoadTextures();
 	void LoadShaders();
 	void CreateMaterials();
 	void CreateGeometry();

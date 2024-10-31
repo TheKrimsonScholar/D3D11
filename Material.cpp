@@ -1,9 +1,14 @@
 #include "Material.h"
 
-Material::Material(std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader, DirectX::XMFLOAT4 color, float roughness) : 
-	vertexShader(vertexShader), pixelShader(pixelShader), color(color), roughness(roughness)
-{
+#include <iostream>
 
+using namespace DirectX;
+
+Material::Material(std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader, 
+	XMFLOAT4 color, float roughness, XMFLOAT2 uvScale, XMFLOAT2 uvOffset) :
+	vertexShader(vertexShader), pixelShader(pixelShader), color(color), roughness(roughness), uvScale(uvScale), uvOffset(uvOffset)
+{
+	
 }
 Material::~Material()
 {
@@ -12,10 +17,17 @@ Material::~Material()
 
 void Material::PrepareMaterial()
 {
-	for(auto srv : textureSRVs)
+	// Set all texture SRVs and samplers on the pixel shader
+	for(auto& srv : textureSRVs)
 		pixelShader->SetShaderResourceView(srv.first.c_str(), srv.second);
-	for(auto sampler : samplers)
+	for(auto& sampler : samplers)
 		pixelShader->SetSamplerState(sampler.first.c_str(), sampler.second);
+
+	// Set constant buffer variables
+	pixelShader->SetFloat4("colorTint", color);
+	pixelShader->SetFloat("roughness", roughness);
+	pixelShader->SetFloat2("uvScale", uvScale);
+	pixelShader->SetFloat2("uvOffset", uvOffset);
 }
 
 void Material::AddTextureSRV(std::string identifier, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv)

@@ -17,6 +17,7 @@ void Entity::Draw(std::shared_ptr<Camera> camera, float totalTime)
 	material->GetVertexShader()->SetShader();
 	material->GetPixelShader()->SetShader();
 
+	// Have the material set up the shader with its private values
 	material->PrepareMaterial();
 
 	// Create data to be sent to the vertex shader
@@ -25,8 +26,6 @@ void Entity::Draw(std::shared_ptr<Camera> camera, float totalTime)
 	vs->SetMatrix4x4("viewMatrix", camera->GetViewMatrix());
 	vs->SetMatrix4x4("projMatrix", camera->GetProjectionMatrix());
 	
-	ps->SetFloat4("colorTint", material->GetColor());
-	ps->SetFloat("roughness", material->GetRoughness());
 	ps->SetFloat3("cameraLocation", camera->GetTransform().GetLocation());
 	ps->SetFloat("totalTime", totalTime);
 

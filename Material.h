@@ -19,8 +19,12 @@ private:
 	DirectX::XMFLOAT4 color;
 	float roughness;
 
+	DirectX::XMFLOAT2 uvScale;
+	DirectX::XMFLOAT2 uvOffset;
+
 public:
-	Material(std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader, DirectX::XMFLOAT4 color, float roughness);
+	Material(std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader, 
+		DirectX::XMFLOAT4 color, float roughness, DirectX::XMFLOAT2 uvScale = DirectX::XMFLOAT2(1, 1), DirectX::XMFLOAT2 uvOffset = DirectX::XMFLOAT2(0, 0));
 	~Material();
 
 	void PrepareMaterial();
@@ -30,10 +34,12 @@ public:
 
 	std::shared_ptr<SimpleVertexShader> GetVertexShader() { return vertexShader; };
 	std::shared_ptr<SimplePixelShader> GetPixelShader() { return pixelShader; };
-	DirectX::XMFLOAT4 GetColor() { return color; };
-	float GetRoughness() { return roughness; };
+	DirectX::XMFLOAT4 GetColor() const { return color; };
+	float GetRoughness() const { return roughness; };
 
 	void SetVertexShader(std::shared_ptr<SimpleVertexShader> value) { vertexShader = value; };
 	void SetPixelShader(std::shared_ptr<SimplePixelShader> value) { pixelShader = value; };
 	void SetColor(DirectX::XMFLOAT4 value) { color = value; };
+	void SetUVScale(DirectX::XMFLOAT2 value) { uvScale = value; };
+	void SetUVOffset(DirectX::XMFLOAT2 value) { uvOffset = value; };
 };

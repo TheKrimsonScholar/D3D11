@@ -29,40 +29,10 @@ using namespace DirectX;
 // --------------------------------------------------------
 void Game::Initialize()
 {
-	const std::vector<std::wstring> texturePaths = 
-	{
-		L"../../Assets/Specular Maps/brokentiles.png",
-		L"../../Assets/Specular Maps/brokentiles_specular.png"
-	};
-
-	for(std::wstring texturePath : texturePaths)
-	{
-		/* The overload that takes the device context also makes mipmaps */
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureSRV;
-		CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(texturePath).c_str(), 0, textureSRV.GetAddressOf());
-		/*const char* name = std::strchr("Maps/brokentiles.png", '/') + 1;
-		std::cout << name << std::endl;*/
-		textureSRVs.insert({ "brokentiles.png", textureSRV });
-	}
-
-	/*Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> specularSRV;
-	CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(texturePaths[1]).c_str(), 0, textureSRV.GetAddressOf());
-	textureSRVs.insert({ "brokentiles_specular.png", textureSRV });*/
-
-	D3D11_SAMPLER_DESC samplerDesc = {};
-	// Clamp coordinate values so texture stretches from extremes
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
-	samplerDesc.MaxAnisotropy = 16; // Must be power of 2, 0-16 - higher is better
-
-	Graphics::Device->CreateSamplerState(&samplerDesc, sampler.GetAddressOf());
-
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
+	LoadTextures();
 	LoadShaders();
 	CreateMaterials();
 	CreateGeometry();
@@ -113,6 +83,44 @@ Game::~Game()
 	ImGui::DestroyContext();
 }
 
+void Game::LoadTextures()
+{
+	// File paths of all textures that will be used
+	const std::vector<std::wstring> texturePaths = 
+	{
+		L"../../Assets/Specular Maps/brokentiles.png",
+		L"../../Assets/Specular Maps/brokentiles_specular.png",
+		L"../../Assets/Specular Maps/rustymetal.png",
+		L"../../Assets/Specular Maps/rustymetal_specular.png",
+		L"../../Assets/Specular Maps/tiles.png",
+		L"../../Assets/Specular Maps/tiles_specular.png"
+	};
+
+	// Load all textures from the paths and associate them with identifiers in an unordered map
+	for(std::wstring texturePath : texturePaths)
+	{
+		/* The overload that takes the device context also makes mipmaps */
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureSRV;
+		CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(texturePath).c_str(), 0, textureSRV.GetAddressOf());
+
+		// Texture name is the final argument of the path (after the last /), i.e. "brokentiles.png"
+		std::wstring textureName = texturePath.substr(texturePath.find_last_of('/') + 1);
+		// Add the SRV to the map so it can be accessed by its texture name
+		textureSRVs.insert({ textureName.c_str(), textureSRV});
+	}
+
+	// Create the basic texture sampler
+	D3D11_SAMPLER_DESC samplerDesc = {};
+	// Clamp coordinate values so texture stretches from extremes
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	samplerDesc.MaxAnisotropy = 16; // Must be power of 2, 0-16 - higher is better
+
+	Graphics::Device->CreateSamplerState(&samplerDesc, sampler.GetAddressOf());
+}
 
 // --------------------------------------------------------
 // Loads shaders from compiled shader object (.cso) files
@@ -133,16 +141,26 @@ void Game::LoadShaders()
 
 void Game::CreateMaterials()
 {
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f, XMFLOAT2(2, 2), XMFLOAT2(1, 1))); // White material (broken tiles)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f, XMFLOAT2(0.5f, 0.5f))); // White material (metal)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material (tiles)
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 0, 1), 0.5f)); // Red material
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 1, 1), 1.0f)); // Purple material
 	materials.push_back(std::make_shared<Material>(vertexShader, normalPixelShader, XMFLOAT4(1, 1, 1, 1), 0.0f)); // Normal material
 	materials.push_back(std::make_shared<Material>(vertexShader, uvPixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // UV material
 	materials.push_back(std::make_shared<Material>(vertexShader, customPixelShader, XMFLOAT4(1, 1, 1, 1), 0.75f)); // Custom material
 
-	materials[0]->AddTextureSRV("SurfaceColorTexture", textureSRVs["brokentiles.png"]);
-	materials[0]->AddTextureSRV("SpecularMap", textureSRVs["brokentiles_specular.png"]);
+	materials[0]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"brokentiles.png"]);
+	materials[0]->AddTextureSRV("SpecularMap", textureSRVs[L"brokentiles_specular.png"]);
 	materials[0]->AddSampler("BasicSampler", sampler);
+
+	materials[1]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"rustymetal.png"]);
+	materials[1]->AddTextureSRV("SpecularMap", textureSRVs[L"rustymetal_specular.png"]);
+	materials[1]->AddSampler("BasicSampler", sampler);
+
+	materials[2]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"tiles.png"]);
+	materials[2]->AddTextureSRV("SpecularMap", textureSRVs[L"tiles_specular.png"]);
+	materials[2]->AddSampler("BasicSampler", sampler);
 }
 
 // --------------------------------------------------------
@@ -163,7 +181,7 @@ void Game::CreateGeometry()
 	float spacing = 1.5f;
 	for(unsigned int i = 0; i < meshes.size(); i++)
 	{
-		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[0]); // Use white material
+		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[i % 3]); // Use the 3 white textured materials
 		newEntity->GetTransform()->MoveAbsolute(-4.5f + i * spacing, -1.5f, 5.0f);
 		newEntity->GetTransform()->Scale(0.5f, 0.5f, 0.5f);
 		entities.push_back(newEntity);
@@ -204,37 +222,6 @@ void Game::CreateLights()
 	pointLight2.Intensity = 1.0f;
 	pointLight2.Range = 4.0f;
 
-	/*directionalLight.LightType = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight.Direction = DirectX::XMFLOAT3(1, 0, 0);
-	directionalLight.Color = DirectX::XMFLOAT3(1, 0, 0);
-	directionalLight.Intensity = 1.0f;
-
-	Light directionalLight2 = {};
-	directionalLight2.LightType = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight2.Direction = DirectX::XMFLOAT3(0, -1, 0);
-	directionalLight2.Color = DirectX::XMFLOAT3(0, 1, 0);
-	directionalLight2.Intensity = 1.0f;
-
-	Light directionalLight3 = {};
-	directionalLight3.LightType = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight3.Direction = DirectX::XMFLOAT3(-1, 1, -0.5f);
-	directionalLight3.Color = DirectX::XMFLOAT3(0, 0, 1);
-	directionalLight3.Intensity = 1.0f;
-
-	Light pointLight1 = {};
-	pointLight1.LightType = LIGHT_TYPE_POINT;
-	pointLight1.Location = DirectX::XMFLOAT3(-1, -1.5f, 5);
-	pointLight1.Color = DirectX::XMFLOAT3(1, 1, 1);
-	pointLight1.Intensity = 1.0f;
-	pointLight1.Range = 10.0f;
-
-	Light pointLight2 = {};
-	pointLight2.LightType = LIGHT_TYPE_POINT;
-	pointLight2.Location = DirectX::XMFLOAT3(1, -1.5f, 5);
-	pointLight2.Color = DirectX::XMFLOAT3(1, 1, 1);
-	pointLight2.Intensity = 0.5f;
-	pointLight2.Range = 10.0f;*/
-
 	lights.push_back(directionalLight);
 	lights.push_back(directionalLight2);
 	lights.push_back(directionalLight3);
@@ -259,6 +246,8 @@ void Game::OnResize()
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
+	this->totalTime = totalTime;
+
 	UpdateImGui(deltaTime, totalTime);
 
 	// Example input checking: Quit if the escape key is pressed
@@ -268,6 +257,9 @@ void Game::Update(float deltaTime, float totalTime)
 	BuildUI();
 
 	GetCamera()->Update(deltaTime);
+
+	// Animate material texture - only for demonstrating UV offset
+	materials[0]->SetUVOffset(XMFLOAT2(totalTime, totalTime));
 
 	for(std::shared_ptr<Entity> e : entities)
 		e->GetTransform()->Rotate(0, deltaTime, 0);
