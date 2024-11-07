@@ -29,6 +29,7 @@ struct VertexShaderInput
 {
 	float3 localPosition	: POSITION;     // XYZ position
 	float3 normal			: NORMAL;
+    float3 tangent          : TANGENT;
 	float2 uv				: TEXCOORD;
 };
 
@@ -41,6 +42,7 @@ struct VertexToPixel
 {
 	float4 screenPosition	: SV_POSITION;
 	float3 normal			: NORMAL;
+    float3 tangent          : TANGENT;
 	float2 uv				: TEXCOORD;
 	float3 worldPosition	: POSITION;
 };

@@ -160,6 +160,12 @@
     <FxCompile Include="PSUV.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="VSSky.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PSSky.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ShaderStructs.hlsli">

@@ -17,6 +17,7 @@ cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("bu
 // Define textures
 Texture2D SurfaceColorTexture : register(t0);
 Texture2D SpecularMap : register(t1);
+Texture2D NormalMap : register(t2);
 
 // Set of options for sampling
 SamplerState BasicSampler : register(s0);
@@ -35,11 +36,18 @@ float4 main(VertexToPixel input) : SV_TARGET
     // Apply UV transformations based on material settings
     input.uv *= uvScale;
     input.uv += uvOffset;
-	
+
 	float3 textureColor = SurfaceColorTexture.Sample(BasicSampler, input.uv + uvOffset).rgb * colorTint.rgb;
 	float specularScale = SpecularMap.Sample(BasicSampler, input.uv + uvOffset).r;
+    float3 unpackedNormal = normalize(NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1);
 
-	input.normal = normalize(input.normal);
+    float3 normal = normalize(input.normal);
+    float3 tangent = normalize(input.tangent);
+    tangent = normalize(tangent - normal * dot(normal, tangent)); // Orthonormalize normal and tangent using Gram-Schmidt Process
+    float3 bitangent = cross(normal, tangent);
+    float3x3 rotationMatrix = float3x3(tangent, bitangent, normal);
+
+	input.normal = mul(unpackedNormal, rotationMatrix);
 
     float3 diffuseColor = 0;
     float3 specularColor = 0;

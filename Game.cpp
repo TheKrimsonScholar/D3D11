@@ -88,12 +88,21 @@ void Game::LoadTextures()
 	// File paths of all textures that will be used
 	const std::vector<std::wstring> texturePaths = 
 	{
-		L"../../Assets/Specular Maps/brokentiles.png",
-		L"../../Assets/Specular Maps/brokentiles_specular.png",
-		L"../../Assets/Specular Maps/rustymetal.png",
-		L"../../Assets/Specular Maps/rustymetal_specular.png",
-		L"../../Assets/Specular Maps/tiles.png",
-		L"../../Assets/Specular Maps/tiles_specular.png"
+		L"../../Assets/Textures/brokentiles.png",
+		L"../../Assets/Textures/rustymetal.png",
+		L"../../Assets/Textures/tiles.png",
+		L"../../Assets/Textures/cobblestone.png",
+		L"../../Assets/Textures/cushion.png",
+		L"../../Assets/Textures/rock.png",
+
+		L"../../Assets/Textures/brokentiles_specular.png",
+		L"../../Assets/Textures/rustymetal_specular.png",
+		L"../../Assets/Textures/tiles_specular.png",
+
+		L"../../Assets/Textures/flat_normals.png",
+		L"../../Assets/Textures/cobblestone_normals.png",
+		L"../../Assets/Textures/cushion_normals.png",
+		L"../../Assets/Textures/rock_normals.png"
 	};
 
 	// Load all textures from the paths and associate them with identifiers in an unordered map
@@ -144,11 +153,16 @@ void Game::CreateMaterials()
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f, XMFLOAT2(2, 2), XMFLOAT2(1, 1))); // White material (broken tiles)
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f, XMFLOAT2(0.5f, 0.5f))); // White material (metal)
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material (tiles)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material (cobblestone)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material (cushion)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material (rock)
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 0, 1), 0.5f)); // Red material
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 1, 1), 1.0f)); // Purple material
 	materials.push_back(std::make_shared<Material>(vertexShader, normalPixelShader, XMFLOAT4(1, 1, 1, 1), 0.0f)); // Normal material
 	materials.push_back(std::make_shared<Material>(vertexShader, uvPixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // UV material
 	materials.push_back(std::make_shared<Material>(vertexShader, customPixelShader, XMFLOAT4(1, 1, 1, 1), 0.75f)); // Custom material
+
+	/* Materials with specular maps */
 
 	materials[0]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"brokentiles.png"]);
 	materials[0]->AddTextureSRV("SpecularMap", textureSRVs[L"brokentiles_specular.png"]);
@@ -161,6 +175,20 @@ void Game::CreateMaterials()
 	materials[2]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"tiles.png"]);
 	materials[2]->AddTextureSRV("SpecularMap", textureSRVs[L"tiles_specular.png"]);
 	materials[2]->AddSampler("BasicSampler", sampler);
+
+	/* Materials with normal maps */
+
+	materials[3]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"cobblestone.png"]);
+	materials[3]->AddTextureSRV("NormalMap", textureSRVs[L"cobblestone_normals.png"]);
+	materials[3]->AddSampler("BasicSampler", sampler);
+
+	materials[4]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"cushion.png"]);
+	materials[4]->AddTextureSRV("NormalMap", textureSRVs[L"cushion_normals.png"]);
+	materials[4]->AddSampler("BasicSampler", sampler);
+
+	materials[5]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"rock.png"]);
+	materials[5]->AddTextureSRV("NormalMap", textureSRVs[L"rock_normals.png"]);
+	materials[5]->AddSampler("BasicSampler", sampler);
 }
 
 // --------------------------------------------------------
@@ -181,7 +209,7 @@ void Game::CreateGeometry()
 	float spacing = 1.5f;
 	for(unsigned int i = 0; i < meshes.size(); i++)
 	{
-		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[i], materials[i % 3]); // Use the 3 white textured materials
+		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[3], materials[3 + i % 3]); // Use the 3 white normal map materials
 		newEntity->GetTransform()->MoveAbsolute(-4.5f + i * spacing, -1.5f, 5.0f);
 		newEntity->GetTransform()->Scale(0.5f, 0.5f, 0.5f);
 		entities.push_back(newEntity);

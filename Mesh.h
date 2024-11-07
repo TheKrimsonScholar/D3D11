@@ -21,7 +21,9 @@ public:
 	Mesh(const wchar_t* filePath);
 	~Mesh();
 
-	void CreateBuffers(Vertex* vertices, UINT* indices, int vertexCount, int indexCount);
+	void CalculateTangents(Vertex* vertices, int vertexCount, unsigned int* indices, int indexCount);
+
+	void CreateBuffers(Vertex* vertices, int vertexCount, UINT* indices, int indexCount);
 
 	void Draw();
 
