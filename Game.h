@@ -15,6 +15,7 @@
 #include "Camera.h"
 #include "Material.h"
 #include "Lights.h"
+#include "Skybox.h"
 
 class Game
 {
@@ -35,6 +36,8 @@ private:
 
 	std::vector<std::shared_ptr<Camera>> cameras;
 	unsigned int activeCameraIndex;
+
+	std::shared_ptr<Skybox> skybox;
 
 	std::vector<std::shared_ptr<Material>> materials;
 	std::vector<std::shared_ptr<Mesh>> meshes;
@@ -63,12 +66,17 @@ public:
 	std::shared_ptr<Camera> GetCamera() { return activeCameraIndex < cameras.size() ? cameras[activeCameraIndex] : nullptr; };
 
 private:
-	// Initialization helper methods - feel free to customize, combine, remove, etc.
+	// Initialization helper methods
 	void LoadTextures();
 	void LoadShaders();
 	void CreateMaterials();
 	void CreateGeometry();
+	void CreateSky();
 	void CreateLights();
+
+	// Helper for creating a cubemap from 6 individual textures
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> CreateCubemap(
+		const wchar_t* right, const wchar_t* left, const wchar_t* up, const wchar_t* down, const wchar_t* front, const wchar_t* back);
 
 	// ImGUI implementation
 	void UpdateImGui(float deltaTime, float totalTime);

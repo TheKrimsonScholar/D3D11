@@ -14,13 +14,13 @@ cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("bu
 	Light lights[64];
 }
 
+// Set of options for sampling
+SamplerState BasicSampler : register(s0);
+
 // Define textures
 Texture2D SurfaceColorTexture : register(t0);
 Texture2D SpecularMap : register(t1);
 Texture2D NormalMap : register(t2);
-
-// Set of options for sampling
-SamplerState BasicSampler : register(s0);
 
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader

@@ -2,14 +2,14 @@
 
 cbuffer DataFromCPU : register(b0)
 {
-	matrix worldMatrix;
+	matrix viewMatrix;
 	matrix projectionMatrix;
 };
 
 struct VertexToPixel_Sky
 {
 	float4 position				: SV_POSITION;
-	float4 sampleDirection		: DIRECTION;
+	float3 sampleDirection		: DIRECTION;
 };
 
 VertexToPixel_Sky main(VertexShaderInput input)
@@ -21,8 +21,8 @@ VertexToPixel_Sky main(VertexShaderInput input)
 	viewNoTranslation._24 = 0;
 	viewNoTranslation._34 = 0;
 
-	output.position = mul(viewNoTranslation, mul(projectionMatrix, input.position));
-	output.position.z = output.position.w;
+	output.position = mul(viewNoTranslation, mul(projectionMatrix, input.localPosition));
+	output.position.z = output.position.w; // Ensure depth is 1.0 (z/w = 1.0)
 
 	output.sampleDirection = float4(1, 0, 0, 1);
 
