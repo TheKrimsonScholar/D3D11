@@ -86,27 +86,7 @@ Game::~Game()
 
 void Game::LoadTextures()
 {
-	// File paths of all textures that will be used
-	const std::vector<std::wstring> texturePaths = 
-	{
-		L"../../Assets/Textures/brokentiles.png",
-		L"../../Assets/Textures/rustymetal.png",
-		L"../../Assets/Textures/tiles.png",
-		L"../../Assets/Textures/cobblestone.png",
-		L"../../Assets/Textures/cushion.png",
-		L"../../Assets/Textures/rock.png",
-
-		L"../../Assets/Textures/brokentiles_specular.png",
-		L"../../Assets/Textures/rustymetal_specular.png",
-		L"../../Assets/Textures/tiles_specular.png",
-
-		L"../../Assets/Textures/flat_normals.png",
-		L"../../Assets/Textures/cobblestone_normals.png",
-		L"../../Assets/Textures/cushion_normals.png",
-		L"../../Assets/Textures/rock_normals.png"
-	};
-
-	// Load all textures from the paths and associate them with identifiers in an unordered map
+	// Load all textures from their paths and associate them with identifiers in an unordered map
 	for(std::wstring texturePath : texturePaths)
 	{
 		/* The overload that takes the device context also makes mipmaps */
@@ -118,6 +98,16 @@ void Game::LoadTextures()
 		// Add the SRV to the map so it can be accessed by its texture name
 		textureSRVs.insert({ textureName.c_str(), textureSRV});
 	}
+
+	// Load cubemaps from paths and add them to textureSRVs
+	for(auto& cubemap : cubemapPaths)
+		textureSRVs.insert({ cubemap.first, CreateCubemap(
+			cubemap.second[0].c_str(),
+			cubemap.second[1].c_str(),
+			cubemap.second[2].c_str(),
+			cubemap.second[3].c_str(),
+			cubemap.second[4].c_str(),
+			cubemap.second[5].c_str()) });
 
 	// Create the basic texture sampler
 	D3D11_SAMPLER_DESC samplerDesc = {};
@@ -146,6 +136,8 @@ void Game::LoadShaders()
 	pixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PixelShader.cso").c_str());
 	normalPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSNormal.cso").c_str());
 	uvPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSUV.cso").c_str());
+	customPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSCustom.cso").c_str());
+
 	customPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSCustom.cso").c_str());
 }
 
@@ -206,6 +198,9 @@ void Game::CreateGeometry()
 	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad.obj").c_str()));
 	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad_double_sided.obj").c_str()));
 
+	/* Create skybox */
+	skybox = std::make_shared<Skybox>(meshes[0], sampler, textureSRVs[L"Cold Sunset"]);
+
 	/* Create entities */
 	float spacing = 1.5f;
 	for(unsigned int i = 0; i < meshes.size(); i++)
@@ -215,11 +210,6 @@ void Game::CreateGeometry()
 		newEntity->GetTransform()->Scale(0.5f, 0.5f, 0.5f);
 		entities.push_back(newEntity);
 	}
-}
-
-void Game::CreateSky()
-{
-	skybox = std::make_shared<Skybox>(meshes[0], sampler, textureSRVs[L"skybox.png"]);
 }
 
 void Game::CreateLights()

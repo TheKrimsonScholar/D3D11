@@ -20,6 +20,41 @@
 class Game
 {
 private:
+	#pragma region FilePaths
+	// File paths of all textures that will be used
+	const std::vector<std::wstring> texturePaths =
+	{
+		L"../../Assets/Textures/brokentiles.png",
+		L"../../Assets/Textures/rustymetal.png",
+		L"../../Assets/Textures/tiles.png",
+		L"../../Assets/Textures/cobblestone.png",
+		L"../../Assets/Textures/cushion.png",
+		L"../../Assets/Textures/rock.png",
+
+		L"../../Assets/Textures/brokentiles_specular.png",
+		L"../../Assets/Textures/rustymetal_specular.png",
+		L"../../Assets/Textures/tiles_specular.png",
+
+		L"../../Assets/Textures/flat_normals.png",
+		L"../../Assets/Textures/cobblestone_normals.png",
+		L"../../Assets/Textures/cushion_normals.png",
+		L"../../Assets/Textures/rock_normals.png",
+	};
+	const std::unordered_map<std::wstring, std::vector<std::wstring>> cubemapPaths =
+	{
+		{ L"Cold Sunset",
+			{
+				L"../../Assets/Textures/Skies/Cold Sunset/right.png",
+				L"../../Assets/Textures/Skies/Cold Sunset/left.png",
+				L"../../Assets/Textures/Skies/Cold Sunset/up.png",
+				L"../../Assets/Textures/Skies/Cold Sunset/down.png",
+				L"../../Assets/Textures/Skies/Cold Sunset/front.png",
+				L"../../Assets/Textures/Skies/Cold Sunset/back.png"
+			}
+		}
+	};
+	#pragma endregion
+
 	// Shaders and shader-related constructs
 	std::shared_ptr<SimpleVertexShader> vertexShader;
 	std::shared_ptr<SimplePixelShader> pixelShader;
