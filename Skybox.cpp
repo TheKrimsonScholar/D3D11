@@ -1,8 +1,10 @@
 #include "Skybox.h"
 #include "Graphics.h"
 
-Skybox::Skybox(std::shared_ptr<Mesh> skyMesh, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cubeMapSRV) :
-	skyMesh(skyMesh), sampler(sampler), cubeMapSRV(cubeMapSRV)
+Skybox::Skybox(
+	std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader, 
+	std::shared_ptr<Mesh> skyMesh, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cubeMapSRV) :
+	vertexShader(vertexShader), pixelShader(pixelShader), skyMesh(skyMesh), sampler(sampler), cubeMapSRV(cubeMapSRV)
 {
 	/* Create Rasterizer State */
 

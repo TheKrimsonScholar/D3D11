@@ -31,6 +31,7 @@ VertexToPixel main( VertexShaderInput input )
 	matrix wvp = mul(projMatrix, mul(viewMatrix, worldMatrix));
     output.screenPosition = mul(wvp, float4(input.localPosition, 1.0f));
 	
+	// Rotate normal and tangent to match object's world transform
     output.normal = mul((float3x3) worldInvTranspose, input.normal);
 	output.tangent = mul((float3x3) worldMatrix, input.tangent);
 	

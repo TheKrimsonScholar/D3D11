@@ -57,7 +57,9 @@ private:
 
 	// Shaders and shader-related constructs
 	std::shared_ptr<SimpleVertexShader> vertexShader;
+	std::shared_ptr<SimpleVertexShader> skyboxVertexShader;
 	std::shared_ptr<SimplePixelShader> pixelShader;
+	std::shared_ptr<SimplePixelShader> skyboxPixelShader;
 	std::shared_ptr<SimplePixelShader> normalPixelShader;
 	std::shared_ptr<SimplePixelShader> uvPixelShader;
 	std::shared_ptr<SimplePixelShader> customPixelShader;
@@ -106,7 +108,6 @@ private:
 	void LoadShaders();
 	void CreateMaterials();
 	void CreateGeometry();
-	void CreateSky();
 	void CreateLights();
 
 	// Helper for creating a cubemap from 6 individual textures

@@ -36,7 +36,6 @@ void Game::Initialize()
 	LoadShaders();
 	CreateMaterials();
 	CreateGeometry();
-	CreateSky();
 	CreateLights();
 
 	// Set initial graphics API state
@@ -96,18 +95,18 @@ void Game::LoadTextures()
 		// Texture name is the final argument of the path (after the last /), i.e. "brokentiles.png"
 		std::wstring textureName = texturePath.substr(texturePath.find_last_of('/') + 1);
 		// Add the SRV to the map so it can be accessed by its texture name
-		textureSRVs.insert({ textureName.c_str(), textureSRV});
+		textureSRVs.insert({ textureName.c_str(), textureSRV });
 	}
 
 	// Load cubemaps from paths and add them to textureSRVs
 	for(auto& cubemap : cubemapPaths)
 		textureSRVs.insert({ cubemap.first, CreateCubemap(
-			cubemap.second[0].c_str(),
-			cubemap.second[1].c_str(),
-			cubemap.second[2].c_str(),
-			cubemap.second[3].c_str(),
-			cubemap.second[4].c_str(),
-			cubemap.second[5].c_str()) });
+			FixPath(cubemap.second[0]).c_str(),
+			FixPath(cubemap.second[1]).c_str(),
+			FixPath(cubemap.second[2]).c_str(),
+			FixPath(cubemap.second[3]).c_str(),
+			FixPath(cubemap.second[4]).c_str(),
+			FixPath(cubemap.second[5]).c_str()) });
 
 	// Create the basic texture sampler
 	D3D11_SAMPLER_DESC samplerDesc = {};
@@ -138,7 +137,8 @@ void Game::LoadShaders()
 	uvPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSUV.cso").c_str());
 	customPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSCustom.cso").c_str());
 
-	customPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSCustom.cso").c_str());
+	skyboxVertexShader = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context, FixPath(L"VSSky.cso").c_str());
+	skyboxPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSSky.cso").c_str());
 }
 
 void Game::CreateMaterials()
@@ -199,13 +199,13 @@ void Game::CreateGeometry()
 	meshes.push_back(std::make_shared<Mesh>(FixPath(L"../../Assets/Models/quad_double_sided.obj").c_str()));
 
 	/* Create skybox */
-	skybox = std::make_shared<Skybox>(meshes[0], sampler, textureSRVs[L"Cold Sunset"]);
+	skybox = std::make_shared<Skybox>(skyboxVertexShader, skyboxPixelShader, meshes[0], sampler, textureSRVs[L"Cold Sunset"]);
 
 	/* Create entities */
 	float spacing = 1.5f;
 	for(unsigned int i = 0; i < meshes.size(); i++)
 	{
-		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[3], materials[3 + i % 3]); // Use the 3 white normal map materials
+		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[(i % 2 == 0) ? 0 : 3], materials[3 + i % 3]); // Use the 3 white normal map materials
 		newEntity->GetTransform()->MoveAbsolute(-4.5f + i * spacing, -1.5f, 5.0f);
 		newEntity->GetTransform()->Scale(0.5f, 0.5f, 0.5f);
 		entities.push_back(newEntity);

@@ -37,17 +37,20 @@ float4 main(VertexToPixel input) : SV_TARGET
     input.uv *= uvScale;
     input.uv += uvOffset;
 
+    // Sample textures
 	float3 textureColor = SurfaceColorTexture.Sample(BasicSampler, input.uv + uvOffset).rgb * colorTint.rgb;
 	float specularScale = SpecularMap.Sample(BasicSampler, input.uv + uvOffset).r;
     float3 unpackedNormal = normalize(NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1);
 
-    float3 normal = normalize(input.normal);
-    float3 tangent = normalize(input.tangent);
-    tangent = normalize(tangent - normal * dot(normal, tangent)); // Orthonormalize normal and tangent using Gram-Schmidt Process
-    float3 bitangent = cross(normal, tangent);
-    float3x3 rotationMatrix = float3x3(tangent, bitangent, normal);
+    // Calculate normal, tangent and bitangent for normal mapping
+    // Orthonormalize normal and tangent using Gram-Schmidt Process
+    float3 N = normalize(input.normal);
+    float3 T = normalize(input.tangent - N * dot(N, input.tangent));
+    float3 B = cross(T, N);
+    float3x3 rotationMatrix = float3x3(T, B, N); // Rotation matrix that transforms tangent space to world space
 
-	input.normal = mul(unpackedNormal, rotationMatrix);
+    // Transform normal value from normal map to world space and update the input parameter
+	input.normal = normalize(mul(unpackedNormal, rotationMatrix));
 
     float3 diffuseColor = 0;
     float3 specularColor = 0;

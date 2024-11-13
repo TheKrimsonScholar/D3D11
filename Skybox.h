@@ -21,7 +21,9 @@ private:
 	std::shared_ptr<SimplePixelShader> pixelShader;
 
 public:
-	Skybox(std::shared_ptr<Mesh> skyMesh, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cubeMapSRV);
+	Skybox(
+		std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader,
+		std::shared_ptr<Mesh> skyMesh, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cubeMapSRV);
 	~Skybox();
 
 	void Draw(std::shared_ptr<Camera> camera);
