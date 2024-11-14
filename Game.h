@@ -115,6 +115,6 @@ private:
 		const wchar_t* right, const wchar_t* left, const wchar_t* up, const wchar_t* down, const wchar_t* front, const wchar_t* back);
 
 	// ImGUI implementation
-	void UpdateImGui(float deltaTime, float totalTime);
+	void UpdateImGui(float deltaTime, float totalTime) const;
 	void BuildUI();
 };

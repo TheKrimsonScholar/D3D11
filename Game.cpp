@@ -205,7 +205,8 @@ void Game::CreateGeometry()
 	float spacing = 1.5f;
 	for(unsigned int i = 0; i < meshes.size(); i++)
 	{
-		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[(i % 2 == 0) ? 0 : 3], materials[3 + i % 3]); // Use the 3 white normal map materials
+		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[(i % 2 == 0) ? 0 : 3], 
+			materials[3 + (size_t) i % 3]); // Use the 3 white normal map materials
 		newEntity->GetTransform()->MoveAbsolute(-4.5f + i * spacing, -1.5f, 5.0f);
 		newEntity->GetTransform()->Scale(0.5f, 0.5f, 0.5f);
 		entities.push_back(newEntity);
@@ -391,7 +392,7 @@ void Game::Update(float deltaTime, float totalTime)
 		e->GetTransform()->Rotate(0, deltaTime, 0);
 }
 
-void Game::UpdateImGui(float deltaTime, float totalTime)
+void Game::UpdateImGui(float deltaTime, float totalTime) const
 {
 	// Feed fresh data to ImGui
 	ImGuiIO& io = ImGui::GetIO();

@@ -21,10 +21,10 @@ VertexToPixel_Sky main(VertexShaderInput input)
 	viewNoTranslation._24 = 0;
 	viewNoTranslation._34 = 0;
 
-	output.position = mul(projectionMatrix, mul(viewNoTranslation, input.localPosition));
+	output.position = mul(projectionMatrix, mul(viewNoTranslation, float4(input.localPosition, 1)));
 	output.position.z = output.position.w; // Ensure depth is 1.0 (z/w = 1.0)
 
-	output.sampleDirection = float4(input.localPosition, 1);
+	output.sampleDirection = input.localPosition;
 
 	return output;
 }
