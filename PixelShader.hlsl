@@ -1,26 +1,27 @@
 #include "ShaderStructs.hlsli"
 #include "ShaderFunctions.hlsli"
 
+#define MAX_LIGHTS 64
+
 cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("buffer 0")
 {
     float4 colorTint;
-	float roughness;
     float2 uvScale;
     float2 uvOffset;
 	float3 cameraLocation;
-	float3 ambient;
 
 	int lightCount;
-	Light lights[64];
+	Light lights[MAX_LIGHTS];
 }
 
 // Set of options for sampling
 SamplerState BasicSampler : register(s0);
 
 // Define textures
-Texture2D SurfaceColorTexture : register(t0);
-Texture2D SpecularMap : register(t1);
-Texture2D NormalMap : register(t2);
+Texture2D AlbedoTexture : register(t0);
+Texture2D NormalMap : register(t1);
+Texture2D RoughnessMap : register(t2);
+Texture2D MetalnessMap : register(t3);
 
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
@@ -38,8 +39,11 @@ float4 main(VertexToPixel input) : SV_TARGET
     input.uv += uvOffset;
 
     // Sample textures
-	float3 textureColor = SurfaceColorTexture.Sample(BasicSampler, input.uv + uvOffset).rgb * colorTint.rgb;
-	float specularScale = SpecularMap.Sample(BasicSampler, input.uv + uvOffset).r;
+    float3 textureColor = pow(AlbedoTexture.Sample(BasicSampler, input.uv).rgb * colorTint.rgb, 2.2f); // Reverse gamma correction of surface texture - final color is re-corrected
+    float roughness = RoughnessMap.Sample(BasicSampler, input.uv).r;
+    float metalness = MetalnessMap.Sample(BasicSampler, input.uv).r;
+    float3 specularColor = lerp(F0_NON_METAL, textureColor, metalness); // Specular is somewhere between a constant and the albedo color, depending on metalness
+    
     float3 unpackedNormal = normalize(NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1);
 
     // Calculate normal, tangent and bitangent for normal mapping
@@ -52,16 +56,22 @@ float4 main(VertexToPixel input) : SV_TARGET
     // Transform normal value from normal map to world space and update the input parameter
 	input.normal = normalize(mul(unpackedNormal, rotationMatrix));
 
-    float3 diffuseColor = 0;
-    float3 specularColor = 0;
+    // Add final color results from all lights
+    float3 totalColor = 0;
 	for(int i = 0; i < lightCount; i++)
     {
-		// Diffuse
-        diffuseColor += diffuse(input, lights[i]);
-
-	    // Specular
-        specularColor += specular(input, lights[i], cameraLocation, roughness) * specularScale;
+        switch(lights[i].LightType)
+        {
+            case LIGHT_TYPE_DIRECTIONAL:
+                totalColor += DirectionalLightPBR(lights[i], input.normal, input.worldPosition, cameraLocation, roughness, metalness, textureColor, specularColor);
+                break;
+            case LIGHT_TYPE_POINT:
+                totalColor += PointLightPBR(lights[i], input.normal, input.worldPosition, cameraLocation, roughness, metalness, textureColor, specularColor);
+                break;
+            default:
+                break;
+        }
     }
-
-    return textureColor.rgbb * float4(ambient + diffuseColor + specularColor, 1);
+    
+    return float4(pow(totalColor, 1.0f / 2.2f), 1); // Gamma correct the final result
 }

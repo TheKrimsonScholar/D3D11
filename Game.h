@@ -39,6 +39,38 @@ private:
 		L"../../Assets/Textures/cobblestone_normals.png",
 		L"../../Assets/Textures/cushion_normals.png",
 		L"../../Assets/Textures/rock_normals.png",
+
+		L"../../Assets/Textures/PBR/bronze_albedo.png",
+		L"../../Assets/Textures/PBR/cobblestone_albedo.png",
+		L"../../Assets/Textures/PBR/floor_albedo.png",
+		L"../../Assets/Textures/PBR/paint_albedo.png",
+		L"../../Assets/Textures/PBR/rough_albedo.png",
+		L"../../Assets/Textures/PBR/scratched_albedo.png",
+		L"../../Assets/Textures/PBR/wood_albedo.png",
+
+		L"../../Assets/Textures/PBR/bronze_normals.png",
+		L"../../Assets/Textures/PBR/cobblestone_normals.png",
+		L"../../Assets/Textures/PBR/floor_normals.png",
+		L"../../Assets/Textures/PBR/paint_normals.png",
+		L"../../Assets/Textures/PBR/rough_normals.png",
+		L"../../Assets/Textures/PBR/scratched_normals.png",
+		L"../../Assets/Textures/PBR/wood_normals.png",
+
+		L"../../Assets/Textures/PBR/bronze_roughness.png",
+		L"../../Assets/Textures/PBR/cobblestone_roughness.png",
+		L"../../Assets/Textures/PBR/floor_roughness.png",
+		L"../../Assets/Textures/PBR/paint_roughness.png",
+		L"../../Assets/Textures/PBR/rough_roughness.png",
+		L"../../Assets/Textures/PBR/scratched_roughness.png",
+		L"../../Assets/Textures/PBR/wood_roughness.png",
+
+		L"../../Assets/Textures/PBR/bronze_metal.png",
+		L"../../Assets/Textures/PBR/cobblestone_metal.png",
+		L"../../Assets/Textures/PBR/floor_metal.png",
+		L"../../Assets/Textures/PBR/paint_metal.png",
+		L"../../Assets/Textures/PBR/rough_metal.png",
+		L"../../Assets/Textures/PBR/scratched_metal.png",
+		L"../../Assets/Textures/PBR/wood_metal.png",
 	};
 	const std::unordered_map<std::wstring, std::vector<std::wstring>> cubemapPaths =
 	{
@@ -80,8 +112,6 @@ private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Entity>> entities;
 
-	DirectX::XMFLOAT3 ambientLightColor { 0.1f, 0.1f, 0.1f };
-	Light directionalLight = {};
 	std::vector<Light> lights;
 
 	float totalTime;

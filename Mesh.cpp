@@ -3,13 +3,12 @@
 
 #include <iostream>
 #include <fstream>
-#include <vector>
 
 #include <DirectXMath.h>
 
 using namespace DirectX;
 
-Mesh::Mesh(std::string name, UINT vertexCount, Vertex vertices[], UINT indexCount, unsigned int indices[]) : 
+Mesh::Mesh(std::string name, UINT vertexCount, Vertex vertices[], UINT indexCount, UINT indices[]) :
 	name(name), vertexCount(vertexCount), indexCount(indexCount), vertices(vertices), indices(indices)
 {
 	CalculateTangents(vertices, vertexCount, indices, indexCount);
@@ -224,6 +223,11 @@ Mesh::Mesh(const wchar_t* filePath)
 	//    an index buffer isn't doing much for us.  We could try to optimize the mesh ourselves
 	//    and detect duplicate vertices, but at that point it would be better to use a more
 	//    sophisticated model loading library like TinyOBJLoader or The Open Asset Importer Library
+
+	this->vertexCount = vertCounter;
+	this->indexCount = indexCounter;
+	this->vertices = &verts[0];
+	this->indices = &indices[0];
 
 	CalculateTangents(&verts[0], vertCounter, &indices[0], indexCounter);
 	CreateBuffers(&verts[0], vertCounter, &indices[0], indexCounter);

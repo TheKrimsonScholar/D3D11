@@ -143,45 +143,57 @@ void Game::LoadShaders()
 
 void Game::CreateMaterials()
 {
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f, XMFLOAT2(2, 2), XMFLOAT2(1, 1))); // White material (broken tiles)
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f, XMFLOAT2(0.5f, 0.5f))); // White material (metal)
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material (tiles)
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material (cobblestone)
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material (cushion)
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // White material (rock)
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 0, 1), 0.5f)); // Red material
-	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 0, 1, 1), 1.0f)); // Purple material
-	materials.push_back(std::make_shared<Material>(vertexShader, normalPixelShader, XMFLOAT4(1, 1, 1, 1), 0.0f)); // Normal material
-	materials.push_back(std::make_shared<Material>(vertexShader, uvPixelShader, XMFLOAT4(1, 1, 1, 1), 0.25f)); // UV material
-	materials.push_back(std::make_shared<Material>(vertexShader, customPixelShader, XMFLOAT4(1, 1, 1, 1), 0.75f)); // Custom material
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (bronze)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (cobblestone)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (floor)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (paint)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (rough)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (scratched)
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (wood)
 
-	/* Materials with specular maps */
+	/* Materials with albedo, normals, roughness, metalness maps (PBR) */
 
-	materials[0]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"brokentiles.png"]);
-	materials[0]->AddTextureSRV("SpecularMap", textureSRVs[L"brokentiles_specular.png"]);
+	materials[0]->AddTextureSRV("AlbedoTexture", textureSRVs[L"bronze_albedo.png"]);
+	materials[0]->AddTextureSRV("NormalMap", textureSRVs[L"bronze_normals.png"]);
+	materials[0]->AddTextureSRV("RoughnessMap", textureSRVs[L"bronze_roughness.png"]);
+	materials[0]->AddTextureSRV("MetalnessMap", textureSRVs[L"bronze_metal.png"]);
 	materials[0]->AddSampler("BasicSampler", sampler);
 
-	materials[1]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"rustymetal.png"]);
-	materials[1]->AddTextureSRV("SpecularMap", textureSRVs[L"rustymetal_specular.png"]);
+	materials[1]->AddTextureSRV("AlbedoTexture", textureSRVs[L"cobblestone_albedo.png"]);
+	materials[1]->AddTextureSRV("NormalMap", textureSRVs[L"cobblestone_normals.png"]);
+	materials[1]->AddTextureSRV("RoughnessMap", textureSRVs[L"cobblestone_roughness.png"]);
+	materials[1]->AddTextureSRV("MetalnessMap", textureSRVs[L"cobblestone_metal.png"]);
 	materials[1]->AddSampler("BasicSampler", sampler);
 
-	materials[2]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"tiles.png"]);
-	materials[2]->AddTextureSRV("SpecularMap", textureSRVs[L"tiles_specular.png"]);
+	materials[2]->AddTextureSRV("AlbedoTexture", textureSRVs[L"floor_albedo.png"]);
+	materials[2]->AddTextureSRV("NormalMap", textureSRVs[L"floor_normals.png"]);
+	materials[2]->AddTextureSRV("RoughnessMap", textureSRVs[L"floor_roughness.png"]);
+	materials[2]->AddTextureSRV("MetalnessMap", textureSRVs[L"floor_metal.png"]);
 	materials[2]->AddSampler("BasicSampler", sampler);
 
-	/* Materials with normal maps */
-
-	materials[3]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"cobblestone.png"]);
-	materials[3]->AddTextureSRV("NormalMap", textureSRVs[L"cobblestone_normals.png"]);
+	materials[3]->AddTextureSRV("AlbedoTexture", textureSRVs[L"paint_albedo.png"]);
+	materials[3]->AddTextureSRV("NormalMap", textureSRVs[L"paint_normals.png"]);
+	materials[3]->AddTextureSRV("RoughnessMap", textureSRVs[L"paint_roughness.png"]);
+	materials[3]->AddTextureSRV("MetalnessMap", textureSRVs[L"paint_metal.png"]);
 	materials[3]->AddSampler("BasicSampler", sampler);
 
-	materials[4]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"cushion.png"]);
-	materials[4]->AddTextureSRV("NormalMap", textureSRVs[L"cushion_normals.png"]);
+	materials[4]->AddTextureSRV("AlbedoTexture", textureSRVs[L"rough_albedo.png"]);
+	materials[4]->AddTextureSRV("NormalMap", textureSRVs[L"rough_normals.png"]);
+	materials[4]->AddTextureSRV("RoughnessMap", textureSRVs[L"rough_roughness.png"]);
+	materials[4]->AddTextureSRV("MetalnessMap", textureSRVs[L"rough_metal.png"]);
 	materials[4]->AddSampler("BasicSampler", sampler);
 
-	materials[5]->AddTextureSRV("SurfaceColorTexture", textureSRVs[L"rock.png"]);
-	materials[5]->AddTextureSRV("NormalMap", textureSRVs[L"rock_normals.png"]);
+	materials[5]->AddTextureSRV("AlbedoTexture", textureSRVs[L"scratched_albedo.png"]);
+	materials[5]->AddTextureSRV("NormalMap", textureSRVs[L"scratched_normals.png"]);
+	materials[5]->AddTextureSRV("RoughnessMap", textureSRVs[L"scratched_roughness.png"]);
+	materials[5]->AddTextureSRV("MetalnessMap", textureSRVs[L"scratched_metal.png"]);
 	materials[5]->AddSampler("BasicSampler", sampler);
+
+	materials[6]->AddTextureSRV("AlbedoTexture", textureSRVs[L"wood_albedo.png"]);
+	materials[6]->AddTextureSRV("NormalMap", textureSRVs[L"wood_normals.png"]);
+	materials[6]->AddTextureSRV("RoughnessMap", textureSRVs[L"wood_roughness.png"]);
+	materials[6]->AddTextureSRV("MetalnessMap", textureSRVs[L"wood_metal.png"]);
+	materials[6]->AddSampler("BasicSampler", sampler);
 }
 
 // --------------------------------------------------------
@@ -203,22 +215,26 @@ void Game::CreateGeometry()
 
 	/* Create entities */
 	float spacing = 1.5f;
-	for(unsigned int i = 0; i < meshes.size(); i++)
+	for(unsigned int i = 0; i < materials.size(); i++)
 	{
-		std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[(i % 2 == 0) ? 0 : 3], materials[3 + (size_t) i % 3]); // Use the 3 white normal map materials
-		newEntity->GetTransform()->MoveAbsolute(-4.5f + i * spacing, -1.5f, 5.0f);
-		newEntity->GetTransform()->Scale(0.5f, 0.5f, 0.5f);
-		entities.push_back(newEntity);
+		for(unsigned int j = 0; j < 5; j++)
+		{
+			std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(meshes[j], materials[i]); // Use the 7 textured PBR materials
+			newEntity->GetTransform()->MoveAbsolute(-4.5f + i * spacing, -2.5f + j * 1.5f, 5.0f);
+			newEntity->GetTransform()->Scale(0.5f, 0.5f, 0.5f);
+			entities.push_back(newEntity);
+		}
 	}
 }
 
 void Game::CreateLights()
 {
 	/* Directional Light Settings */
-	directionalLight.LightType = LIGHT_TYPE_DIRECTIONAL;
-	directionalLight.Direction = DirectX::XMFLOAT3(1, -1, 0);
-	directionalLight.Color = DirectX::XMFLOAT3(0.25f, 0, 0.25f);
-	directionalLight.Intensity = 1.0f;
+	Light directionalLight1 = {};
+	directionalLight1.LightType = LIGHT_TYPE_DIRECTIONAL;
+	directionalLight1.Direction = DirectX::XMFLOAT3(1, -1, 0);
+	directionalLight1.Color = DirectX::XMFLOAT3(0.25f, 0, 0.25f);
+	directionalLight1.Intensity = 1.0f;
 
 	Light directionalLight2 = {};
 	directionalLight2.LightType = LIGHT_TYPE_DIRECTIONAL;
@@ -232,6 +248,7 @@ void Game::CreateLights()
 	directionalLight3.Color = DirectX::XMFLOAT3(0, 1, 0);
 	directionalLight3.Intensity = 0.5f;
 
+	/* Point Light Settings */
 	Light pointLight1 = {};
 	pointLight1.LightType = LIGHT_TYPE_POINT;
 	pointLight1.Location = DirectX::XMFLOAT3(0, -1, 5);
@@ -246,7 +263,7 @@ void Game::CreateLights()
 	pointLight2.Intensity = 1.0f;
 	pointLight2.Range = 4.0f;
 
-	lights.push_back(directionalLight);
+	lights.push_back(directionalLight1);
 	lights.push_back(directionalLight2);
 	lights.push_back(directionalLight3);
 	lights.push_back(pointLight1);
@@ -383,9 +400,6 @@ void Game::Update(float deltaTime, float totalTime)
 	BuildUI();
 
 	GetCamera()->Update(deltaTime);
-
-	// Animate material texture - only for demonstrating UV offset
-	materials[0]->SetUVOffset(XMFLOAT2(totalTime, totalTime));
 
 	for(std::shared_ptr<Entity> e : entities)
 		e->GetTransform()->Rotate(0, deltaTime, 0);
@@ -532,9 +546,6 @@ void Game::Draw(float deltaTime, float totalTime)
 		// Draw all entities
 		for(std::shared_ptr<Entity> e : entities)
 		{
-			// Manually set the color of ambient light on the entity material's pixel shader
-			e->GetMaterial()->GetPixelShader()->SetFloat3("ambient", ambientLightColor);
-
 			// Give light data for directional light
 			e->GetMaterial()->GetPixelShader()->SetInt("lightCount", (int) lights.size());
 			e->GetMaterial()->GetPixelShader()->SetData("lights", &lights[0], sizeof(Light) * (int) lights.size());

@@ -5,8 +5,8 @@
 using namespace DirectX;
 
 Material::Material(std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader, 
-	XMFLOAT4 color, float roughness, XMFLOAT2 uvScale, XMFLOAT2 uvOffset) :
-	vertexShader(vertexShader), pixelShader(pixelShader), color(color), roughness(roughness), uvScale(uvScale), uvOffset(uvOffset)
+	XMFLOAT4 color, XMFLOAT2 uvScale, XMFLOAT2 uvOffset) :
+	vertexShader(vertexShader), pixelShader(pixelShader), color(color), uvScale(uvScale), uvOffset(uvOffset)
 {
 	
 }
@@ -25,7 +25,6 @@ void Material::PrepareMaterial()
 
 	// Set constant buffer variables
 	pixelShader->SetFloat4("colorTint", color);
-	pixelShader->SetFloat("roughness", roughness);
 	pixelShader->SetFloat2("uvScale", uvScale);
 	pixelShader->SetFloat2("uvOffset", uvOffset);
 }
