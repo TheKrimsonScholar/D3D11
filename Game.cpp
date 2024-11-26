@@ -37,6 +37,7 @@ void Game::Initialize()
 	CreateMaterials();
 	CreateGeometry();
 	CreateLights();
+	CreateShadowmap();
 
 	// Set initial graphics API state
 	//  - These settings persist until we change them
@@ -139,6 +140,8 @@ void Game::LoadShaders()
 
 	skyboxVertexShader = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context, FixPath(L"VSSky.cso").c_str());
 	skyboxPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSSky.cso").c_str());
+
+	shadowVertexShader = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context, FixPath(L"VSShadowMap.cso").c_str());
 }
 
 void Game::CreateMaterials()
@@ -150,6 +153,8 @@ void Game::CreateMaterials()
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (rough)
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (scratched)
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (wood)
+
+	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), XMFLOAT2(5, 5))); // Floor material
 
 	/* Materials with albedo, normals, roughness, metalness maps (PBR) */
 
@@ -194,6 +199,12 @@ void Game::CreateMaterials()
 	materials[6]->AddTextureSRV("RoughnessMap", textureSRVs[L"wood_roughness.png"]);
 	materials[6]->AddTextureSRV("MetalnessMap", textureSRVs[L"wood_metal.png"]);
 	materials[6]->AddSampler("BasicSampler", sampler);
+
+	materials[7]->AddTextureSRV("AlbedoTexture", textureSRVs[L"wood_albedo.png"]);
+	materials[7]->AddTextureSRV("NormalMap", textureSRVs[L"wood_normals.png"]);
+	materials[7]->AddTextureSRV("RoughnessMap", textureSRVs[L"wood_roughness.png"]);
+	materials[7]->AddTextureSRV("MetalnessMap", textureSRVs[L"wood_metal.png"]);
+	materials[7]->AddSampler("BasicSampler", sampler);
 }
 
 // --------------------------------------------------------
@@ -214,6 +225,11 @@ void Game::CreateGeometry()
 	skybox = std::make_shared<Skybox>(skyboxVertexShader, skyboxPixelShader, meshes[0], sampler, textureSRVs[L"Cold Sunset"]);
 
 	/* Create entities */
+	std::shared_ptr<Entity> floor = std::make_shared<Entity>(meshes[5], materials[7]);
+	floor->GetTransform()->MoveAbsolute(0, -3, 0);
+	floor->GetTransform()->Scale(10, 10, 10);
+	entities.push_back(floor);
+
 	float spacing = 1.5f;
 	for(unsigned int i = 0; i < materials.size(); i++)
 	{
@@ -268,6 +284,55 @@ void Game::CreateLights()
 	lights.push_back(directionalLight3);
 	lights.push_back(pointLight1);
 	lights.push_back(pointLight2);
+
+	XMVECTOR lightDirection = XMLoadFloat3(&directionalLight1.Direction);
+	XMMATRIX lightView = XMMatrixLookToLH(
+		-lightDirection * 20, // Position: "Backing up" 20 units from origin
+		lightDirection, // Direction: light's direction
+		XMVectorSet(0, 1, 0, 0)); // Up: World up vector (Y axis)
+
+	float lightProjectionSize = 15.0f; // Tweak for your scene!
+	XMMATRIX lightProjection = XMMatrixOrthographicLH(
+		lightProjectionSize,
+		lightProjectionSize,
+		1.0f,
+		100.0f);
+
+	XMStoreFloat4x4(&shadowViewMatrix, lightView);
+	XMStoreFloat4x4(&shadowProjectionMatrix, lightProjection);
+}
+
+void Game::CreateShadowmap()
+{
+	D3D11_TEXTURE2D_DESC shadowDesc = {};
+	shadowDesc.Width = 1024; // Ideally a power of 2
+	shadowDesc.Height = 1024; // Ideally a power of 2
+	shadowDesc.ArraySize = 1;
+	shadowDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	shadowDesc.CPUAccessFlags = 0;
+	shadowDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	shadowDesc.MipLevels = 1;
+	shadowDesc.MiscFlags = 0;
+	shadowDesc.SampleDesc.Count = 1;
+	shadowDesc.SampleDesc.Quality = 0;
+	shadowDesc.Usage = D3D11_USAGE_DEFAULT;
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> shadowTexture; // Shadow texture is only used for creating SRV and DSV; can be local
+	Graphics::Device->CreateTexture2D(&shadowDesc, 0, shadowTexture.GetAddressOf());
+
+	// Create shadow map SRV
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	Graphics::Device->CreateShaderResourceView(shadowTexture.Get(), &srvDesc, shadowSRV.GetAddressOf());
+
+	// Create shadow map DSV
+	D3D11_DEPTH_STENCIL_VIEW_DESC shadowDSDesc = {};
+	shadowDSDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	shadowDSDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	shadowDSDesc.Texture2D.MipSlice = 0;
+	Graphics::Device->CreateDepthStencilView(shadowTexture.Get(), &shadowDSDesc, shadowDSV.GetAddressOf());
 }
 
 // --------------------------------------------------------
@@ -401,8 +466,14 @@ void Game::Update(float deltaTime, float totalTime)
 
 	GetCamera()->Update(deltaTime);
 
-	for(std::shared_ptr<Entity> e : entities)
-		e->GetTransform()->Rotate(0, deltaTime, 0);
+	for(int i = 1; i < entities.size(); i++)
+	{
+		entities[i]->GetTransform()->Rotate(0, deltaTime, 0);
+		entities[i]->GetTransform()->SetLocation(
+			entities[i]->GetTransform()->GetLocation().x,
+			entities[i]->GetTransform()->GetLocation().y, 
+			5 + sin(i * totalTime / 10.0f) * 5);
+	}
 }
 
 void Game::UpdateImGui(float deltaTime, float totalTime) const
@@ -438,6 +509,13 @@ void Game::BuildUI()
 	// Button to toggle visibility of the ImGui demo window
 	if(ImGui::Button("Toggle Demo Window"))
 		isDemoWindowHidden = !isDemoWindowHidden;
+
+	if(ImGui::TreeNode("Shadows"))
+	{
+		ImGui::Image(shadowSRV.Get(), ImVec2(512, 512));
+
+		ImGui::TreePop();
+	}
 
 	if(ImGui::TreeNode("Lights"))
 	{
@@ -537,6 +615,42 @@ void Game::Draw(float deltaTime, float totalTime)
 		// Clear the back buffer (erase what's on screen) and depth buffer
 		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	backgroundColor);
 		Graphics::Context->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+		/* Shadow mapping setup */
+
+		Graphics::Context->ClearDepthStencilView(shadowDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+		ID3D11RenderTargetView* nullRTV{};
+		Graphics::Context->OMSetRenderTargets(1, &nullRTV, shadowDSV.Get());
+
+		Graphics::Context->PSSetShader(0, 0, 0);
+
+		D3D11_VIEWPORT viewport = {};
+		viewport.Width = 1024.0f;
+		viewport.Height = 1024.0f;
+		viewport.MaxDepth = 1.0f;
+		Graphics::Context->RSSetViewports(1, &viewport);
+
+		shadowVertexShader->SetShader();
+		shadowVertexShader->SetMatrix4x4("view", shadowViewMatrix);
+		shadowVertexShader->SetMatrix4x4("projection", shadowProjectionMatrix);
+		// Loop and draw all entities
+		for(auto& e : entities)
+		{
+			shadowVertexShader->SetMatrix4x4("world", e->GetTransform()->GetWorldMatrix());
+			shadowVertexShader->CopyAllBufferData();
+
+			// Draw the mesh directly to avoid the entity's material
+			e->GetMesh()->Draw();
+		}
+
+		viewport.Width = (float) Window::Width();
+		viewport.Height = (float) Window::Height();
+		Graphics::Context->RSSetViewports(1, &viewport);
+		Graphics::Context->OMSetRenderTargets(
+			1,
+			Graphics::BackBufferRTV.GetAddressOf(),
+			Graphics::DepthBufferDSV.Get());
 	}
 
 	// DRAW geometry

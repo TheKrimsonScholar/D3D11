@@ -99,6 +99,15 @@ private:
 	std::unordered_map<std::wstring, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> textureSRVs;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 
+	// Shadow mapping resources
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowDSV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSRV;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> shadowRasterizer;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> shadowSampler;
+	std::shared_ptr<SimpleVertexShader> shadowVertexShader;
+	DirectX::XMFLOAT4X4 shadowViewMatrix;
+	DirectX::XMFLOAT4X4 shadowProjectionMatrix;
+
 	float backgroundColor[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 
 	bool isDemoWindowHidden;
@@ -139,6 +148,7 @@ private:
 	void CreateMaterials();
 	void CreateGeometry();
 	void CreateLights();
+	void CreateShadowmap();
 
 	// Helper for creating a cubemap from 6 individual textures
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> CreateCubemap(
