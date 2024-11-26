@@ -40,11 +40,12 @@ struct VertexShaderInput
 // - Each variable must have a semantic, which defines its usage
 struct VertexToPixel
 {
-	float4 screenPosition	: SV_POSITION;
-	float3 normal			: NORMAL;
-    float3 tangent          : TANGENT;
-	float2 uv				: TEXCOORD;
-	float3 worldPosition	: POSITION;
+	float4 screenPosition   	: SV_POSITION;
+	float3 normal   			: NORMAL;
+    float3 tangent              : TANGENT;
+	float2 uv   				: TEXCOORD;
+	float3 worldPosition    	: POSITION;
+    float4 shadowMapPosition    : TEXCOORD_SHADOW;
 };
 
 #endif

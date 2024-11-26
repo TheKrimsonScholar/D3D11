@@ -22,6 +22,7 @@ Texture2D AlbedoTexture : register(t0);
 Texture2D NormalMap : register(t1);
 Texture2D RoughnessMap : register(t2);
 Texture2D MetalnessMap : register(t3);
+Texture2D ShadowMap : register(t4);
 
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
@@ -34,6 +35,13 @@ Texture2D MetalnessMap : register(t3);
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
+    input.shadowmapPos.xyz /= input.shadowmapPos.w; // Perspective divide
+    float2 shadowUV = input.shadowmapPos.xy * 0.5f + 0.5f;
+    shadowUV.y = 1 - shadowUV.y;
+
+    float shadowMapDepth = ShadowMap.Sample(BasicSampler, shadowUV).r;
+    float distFromLight = input.shadowmapPos.z;
+
     // Apply UV transformations based on material settings
     input.uv *= uvScale;
     input.uv += uvOffset;
