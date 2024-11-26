@@ -157,4 +157,6 @@ private:
 	// ImGUI implementation
 	void UpdateImGui(float deltaTime, float totalTime) const;
 	void BuildUI();
+
+	void UpdateShadowmapMatrices(Light directionalLight);
 };

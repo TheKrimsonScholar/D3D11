@@ -285,21 +285,7 @@ void Game::CreateLights()
 	lights.push_back(pointLight1);
 	lights.push_back(pointLight2);
 
-	XMVECTOR lightDirection = XMLoadFloat3(&directionalLight1.Direction);
-	XMMATRIX lightView = XMMatrixLookToLH(
-		-lightDirection * 20, // Position: "Backing up" 20 units from origin
-		lightDirection, // Direction: light's direction
-		XMVectorSet(0, 1, 0, 0)); // Up: World up vector (Y axis)
-
-	float lightProjectionSize = 15.0f; // Tweak for your scene!
-	XMMATRIX lightProjection = XMMatrixOrthographicLH(
-		lightProjectionSize,
-		lightProjectionSize,
-		1.0f,
-		100.0f);
-
-	XMStoreFloat4x4(&shadowViewMatrix, lightView);
-	XMStoreFloat4x4(&shadowProjectionMatrix, lightProjection);
+	UpdateShadowmapMatrices(directionalLight1);
 }
 
 void Game::CreateShadowmap()
@@ -531,6 +517,11 @@ void Game::BuildUI()
 				ImGui::DragFloat3("Direction", &lights[i].Direction.x, 0.01f, -1, 1);
 				ImGui::DragFloat("Intensity", &lights[i].Intensity, 0.01f, 0, 10);
 				ImGui::DragFloat("Range", &lights[i].Range, 0.01f, 0, 10);
+
+				// If modifying the main directional light, update shadowmap matrices using the new values
+				if(i == 0 && lights[i].LightType == LIGHT_TYPE_DIRECTIONAL)
+					UpdateShadowmapMatrices(lights[i]);
+
 				ImGui::TreePop();
 			}
 			ImGui::PopID();
@@ -600,6 +591,25 @@ void Game::BuildUI()
 	}
 
 	ImGui::End();
+}
+
+void Game::UpdateShadowmapMatrices(Light directionalLight)
+{
+	XMVECTOR lightDirection = XMLoadFloat3(&directionalLight.Direction);
+	XMMATRIX lightView = XMMatrixLookToLH(
+		-lightDirection * 20, // Position: "Backing up" 20 units from origin
+		lightDirection, // Direction: light's direction
+		XMVectorSet(0, 1, 0, 0)); // Up: World up vector (Y axis)
+
+	float lightProjectionSize = 15.0f; // Tweak for your scene!
+	XMMATRIX lightProjection = XMMatrixOrthographicLH(
+		lightProjectionSize,
+		lightProjectionSize,
+		1.0f,
+		100.0f);
+
+	XMStoreFloat4x4(&shadowViewMatrix, lightView);
+	XMStoreFloat4x4(&shadowProjectionMatrix, lightProjection);
 }
 
 
