@@ -16,6 +16,7 @@ cbuffer DataFromCPU : register(b0) // Take the data from memory register b0 ("bu
 
 // Set of options for sampling
 SamplerState BasicSampler : register(s0);
+SamplerComparisonState ShadowSampler : register(s1);
 
 // Define textures
 Texture2D AlbedoTexture : register(t0);
@@ -35,12 +36,14 @@ Texture2D ShadowMap : register(t4);
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
-    input.shadowmapPos.xyz /= input.shadowmapPos.w; // Perspective divide
-    float2 shadowUV = input.shadowmapPos.xy * 0.5f + 0.5f;
+    input.shadowMapPosition.xyz /= input.shadowMapPosition.w; // Manual perspective divide
+    
+    float2 shadowUV = input.shadowMapPosition.xy * 0.5f + 0.5f;
     shadowUV.y = 1 - shadowUV.y;
 
-    float shadowMapDepth = ShadowMap.Sample(BasicSampler, shadowUV).r;
-    float distFromLight = input.shadowmapPos.z;
+    float distanceToLight = input.shadowMapPosition.z;
+    // Get the amount of shadowing by comparing distance to light and the sampled shadow map value
+    float shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowUV, distanceToLight).r;
 
     // Apply UV transformations based on material settings
     input.uv *= uvScale;
@@ -79,6 +82,10 @@ float4 main(VertexToPixel input) : SV_TARGET
             default:
                 break;
         }
+        
+        // Assume the first light is the shadow-casting light; scale by shadow amount retrieved from shadow sampler
+        if(i == 0)
+            totalColor *= shadowAmount;
     }
     
     return float4(pow(totalColor, 1.0f / 2.2f), 1); // Gamma correct the final result

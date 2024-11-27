@@ -34,10 +34,10 @@ void Game::Initialize()
 	//  - You'll be expanding and/or replacing these later
 	LoadTextures();
 	LoadShaders();
+	CreateShadowMap();
 	CreateMaterials();
 	CreateGeometry();
 	CreateLights();
-	CreateShadowmap();
 
 	// Set initial graphics API state
 	//  - These settings persist until we change them
@@ -162,49 +162,65 @@ void Game::CreateMaterials()
 	materials[0]->AddTextureSRV("NormalMap", textureSRVs[L"bronze_normals.png"]);
 	materials[0]->AddTextureSRV("RoughnessMap", textureSRVs[L"bronze_roughness.png"]);
 	materials[0]->AddTextureSRV("MetalnessMap", textureSRVs[L"bronze_metal.png"]);
+	materials[0]->AddTextureSRV("ShadowMap", shadowSRV);
 	materials[0]->AddSampler("BasicSampler", sampler);
+	materials[0]->AddSampler("ShadowSampler", shadowSampler);
 
 	materials[1]->AddTextureSRV("AlbedoTexture", textureSRVs[L"cobblestone_albedo.png"]);
 	materials[1]->AddTextureSRV("NormalMap", textureSRVs[L"cobblestone_normals.png"]);
 	materials[1]->AddTextureSRV("RoughnessMap", textureSRVs[L"cobblestone_roughness.png"]);
 	materials[1]->AddTextureSRV("MetalnessMap", textureSRVs[L"cobblestone_metal.png"]);
+	materials[1]->AddTextureSRV("ShadowMap", shadowSRV);
 	materials[1]->AddSampler("BasicSampler", sampler);
+	materials[1]->AddSampler("ShadowSampler", shadowSampler);
 
 	materials[2]->AddTextureSRV("AlbedoTexture", textureSRVs[L"floor_albedo.png"]);
 	materials[2]->AddTextureSRV("NormalMap", textureSRVs[L"floor_normals.png"]);
 	materials[2]->AddTextureSRV("RoughnessMap", textureSRVs[L"floor_roughness.png"]);
 	materials[2]->AddTextureSRV("MetalnessMap", textureSRVs[L"floor_metal.png"]);
+	materials[2]->AddTextureSRV("ShadowMap", shadowSRV);
 	materials[2]->AddSampler("BasicSampler", sampler);
+	materials[2]->AddSampler("ShadowSampler", shadowSampler);
 
 	materials[3]->AddTextureSRV("AlbedoTexture", textureSRVs[L"paint_albedo.png"]);
 	materials[3]->AddTextureSRV("NormalMap", textureSRVs[L"paint_normals.png"]);
 	materials[3]->AddTextureSRV("RoughnessMap", textureSRVs[L"paint_roughness.png"]);
 	materials[3]->AddTextureSRV("MetalnessMap", textureSRVs[L"paint_metal.png"]);
+	materials[3]->AddTextureSRV("ShadowMap", shadowSRV);
 	materials[3]->AddSampler("BasicSampler", sampler);
+	materials[3]->AddSampler("ShadowSampler", shadowSampler);
 
 	materials[4]->AddTextureSRV("AlbedoTexture", textureSRVs[L"rough_albedo.png"]);
 	materials[4]->AddTextureSRV("NormalMap", textureSRVs[L"rough_normals.png"]);
 	materials[4]->AddTextureSRV("RoughnessMap", textureSRVs[L"rough_roughness.png"]);
 	materials[4]->AddTextureSRV("MetalnessMap", textureSRVs[L"rough_metal.png"]);
+	materials[4]->AddTextureSRV("ShadowMap", shadowSRV);
 	materials[4]->AddSampler("BasicSampler", sampler);
+	materials[4]->AddSampler("ShadowSampler", shadowSampler);
 
 	materials[5]->AddTextureSRV("AlbedoTexture", textureSRVs[L"scratched_albedo.png"]);
 	materials[5]->AddTextureSRV("NormalMap", textureSRVs[L"scratched_normals.png"]);
 	materials[5]->AddTextureSRV("RoughnessMap", textureSRVs[L"scratched_roughness.png"]);
 	materials[5]->AddTextureSRV("MetalnessMap", textureSRVs[L"scratched_metal.png"]);
+	materials[5]->AddTextureSRV("ShadowMap", shadowSRV);
 	materials[5]->AddSampler("BasicSampler", sampler);
+	materials[5]->AddSampler("ShadowSampler", shadowSampler);
 
 	materials[6]->AddTextureSRV("AlbedoTexture", textureSRVs[L"wood_albedo.png"]);
 	materials[6]->AddTextureSRV("NormalMap", textureSRVs[L"wood_normals.png"]);
 	materials[6]->AddTextureSRV("RoughnessMap", textureSRVs[L"wood_roughness.png"]);
 	materials[6]->AddTextureSRV("MetalnessMap", textureSRVs[L"wood_metal.png"]);
+	materials[6]->AddTextureSRV("ShadowMap", shadowSRV);
 	materials[6]->AddSampler("BasicSampler", sampler);
+	materials[6]->AddSampler("ShadowSampler", shadowSampler);
 
 	materials[7]->AddTextureSRV("AlbedoTexture", textureSRVs[L"wood_albedo.png"]);
 	materials[7]->AddTextureSRV("NormalMap", textureSRVs[L"wood_normals.png"]);
 	materials[7]->AddTextureSRV("RoughnessMap", textureSRVs[L"wood_roughness.png"]);
 	materials[7]->AddTextureSRV("MetalnessMap", textureSRVs[L"wood_metal.png"]);
+	materials[7]->AddTextureSRV("ShadowMap", shadowSRV);
 	materials[7]->AddSampler("BasicSampler", sampler);
+	materials[7]->AddSampler("ShadowSampler", shadowSampler);
 }
 
 // --------------------------------------------------------
@@ -285,11 +301,12 @@ void Game::CreateLights()
 	lights.push_back(pointLight1);
 	lights.push_back(pointLight2);
 
-	UpdateShadowmapMatrices(directionalLight1);
+	UpdateShadowMapMatrices(directionalLight1);
 }
 
-void Game::CreateShadowmap()
+void Game::CreateShadowMap()
 {
+	// Create shadow map texture
 	D3D11_TEXTURE2D_DESC shadowDesc = {};
 	shadowDesc.Width = 1024; // Ideally a power of 2
 	shadowDesc.Height = 1024; // Ideally a power of 2
@@ -302,8 +319,8 @@ void Game::CreateShadowmap()
 	shadowDesc.SampleDesc.Count = 1;
 	shadowDesc.SampleDesc.Quality = 0;
 	shadowDesc.Usage = D3D11_USAGE_DEFAULT;
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> shadowTexture; // Shadow texture is only used for creating SRV and DSV; can be local
-	Graphics::Device->CreateTexture2D(&shadowDesc, 0, shadowTexture.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> shadowMapTexture; // Shadow texture is only used for creating SRV and DSV; can be local
+	Graphics::Device->CreateTexture2D(&shadowDesc, 0, shadowMapTexture.GetAddressOf());
 
 	// Create shadow map SRV
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -311,14 +328,33 @@ void Game::CreateShadowmap()
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.MostDetailedMip = 0;
-	Graphics::Device->CreateShaderResourceView(shadowTexture.Get(), &srvDesc, shadowSRV.GetAddressOf());
+	Graphics::Device->CreateShaderResourceView(shadowMapTexture.Get(), &srvDesc, shadowSRV.GetAddressOf());
 
 	// Create shadow map DSV
 	D3D11_DEPTH_STENCIL_VIEW_DESC shadowDSDesc = {};
 	shadowDSDesc.Format = DXGI_FORMAT_D32_FLOAT;
 	shadowDSDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	shadowDSDesc.Texture2D.MipSlice = 0;
-	Graphics::Device->CreateDepthStencilView(shadowTexture.Get(), &shadowDSDesc, shadowDSV.GetAddressOf());
+	Graphics::Device->CreateDepthStencilView(shadowMapTexture.Get(), &shadowDSDesc, shadowDSV.GetAddressOf());
+
+	// Create shadow map rasterizer
+	D3D11_RASTERIZER_DESC shadowRastDesc = {};
+	shadowRastDesc.FillMode = D3D11_FILL_SOLID;
+	shadowRastDesc.CullMode = D3D11_CULL_BACK;
+	shadowRastDesc.DepthClipEnable = true;
+	shadowRastDesc.DepthBias = 1000; // Min. precision units, not world units!
+	shadowRastDesc.SlopeScaledDepthBias = 1.0f; // Bias more based on slope
+	Graphics::Device->CreateRasterizerState(&shadowRastDesc, &shadowRasterizer);
+	
+	// Create shadow map sampler
+	D3D11_SAMPLER_DESC shadowSampDesc = {};
+	shadowSampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+	shadowSampDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
+	shadowSampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSampDesc.BorderColor[0] = 1.0f; // Only need the first component
+	Graphics::Device->CreateSamplerState(&shadowSampDesc, &shadowSampler);
 }
 
 // --------------------------------------------------------
@@ -520,7 +556,7 @@ void Game::BuildUI()
 
 				// If modifying the main directional light, update shadowmap matrices using the new values
 				if(i == 0 && lights[i].LightType == LIGHT_TYPE_DIRECTIONAL)
-					UpdateShadowmapMatrices(lights[i]);
+					UpdateShadowMapMatrices(lights[i]);
 
 				ImGui::TreePop();
 			}
@@ -593,7 +629,7 @@ void Game::BuildUI()
 	ImGui::End();
 }
 
-void Game::UpdateShadowmapMatrices(Light directionalLight)
+void Game::UpdateShadowMapMatrices(Light directionalLight)
 {
 	XMVECTOR lightDirection = XMLoadFloat3(&directionalLight.Direction);
 	XMMATRIX lightView = XMMatrixLookToLH(
@@ -635,6 +671,8 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		Graphics::Context->PSSetShader(0, 0, 0);
 
+		Graphics::Context->RSSetState(shadowRasterizer.Get());
+
 		D3D11_VIEWPORT viewport = {};
 		viewport.Width = 1024.0f;
 		viewport.Height = 1024.0f;
@@ -654,6 +692,8 @@ void Game::Draw(float deltaTime, float totalTime)
 			e->GetMesh()->Draw();
 		}
 
+		Graphics::Context->RSSetState(0);
+
 		viewport.Width = (float) Window::Width();
 		viewport.Height = (float) Window::Height();
 		Graphics::Context->RSSetViewports(1, &viewport);
@@ -670,7 +710,11 @@ void Game::Draw(float deltaTime, float totalTime)
 		// Draw all entities
 		for(std::shared_ptr<Entity> e : entities)
 		{
-			// Give light data for directional light
+			// Give light data for main (shadow-casting) directional light
+			e->GetMaterial()->GetVertexShader()->SetMatrix4x4("lightView", shadowViewMatrix);
+			e->GetMaterial()->GetVertexShader()->SetMatrix4x4("lightProj", shadowProjectionMatrix);
+
+			// Give all light data
 			e->GetMaterial()->GetPixelShader()->SetInt("lightCount", (int) lights.size());
 			e->GetMaterial()->GetPixelShader()->SetData("lights", &lights[0], sizeof(Light) * (int) lights.size());
 
@@ -699,6 +743,10 @@ void Game::Draw(float deltaTime, float totalTime)
 			1,
 			Graphics::BackBufferRTV.GetAddressOf(),
 			Graphics::DepthBufferDSV.Get());
+
+		// Unbind ALL SRVs
+		ID3D11ShaderResourceView* nullSRVs[128] = {};
+		Graphics::Context->PSSetShaderResources(0, 128, nullSRVs);
 	}
 }
 

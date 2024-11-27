@@ -148,7 +148,7 @@ private:
 	void CreateMaterials();
 	void CreateGeometry();
 	void CreateLights();
-	void CreateShadowmap();
+	void CreateShadowMap();
 
 	// Helper for creating a cubemap from 6 individual textures
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> CreateCubemap(
@@ -158,5 +158,5 @@ private:
 	void UpdateImGui(float deltaTime, float totalTime) const;
 	void BuildUI();
 
-	void UpdateShadowmapMatrices(Light directionalLight);
+	void UpdateShadowMapMatrices(Light directionalLight);
 };

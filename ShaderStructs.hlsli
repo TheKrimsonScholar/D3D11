@@ -45,7 +45,7 @@ struct VertexToPixel
     float3 tangent              : TANGENT;
 	float2 uv   				: TEXCOORD;
 	float3 worldPosition    	: POSITION;
-    float4 shadowMapPosition    : TEXCOORD_SHADOW;
+    float4 shadowMapPosition    : SHADOW_POSITION;
 };
 
 #endif
