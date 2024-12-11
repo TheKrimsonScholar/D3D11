@@ -108,6 +108,26 @@ private:
 	DirectX::XMFLOAT4X4 shadowViewMatrix;
 	DirectX::XMFLOAT4X4 shadowProjectionMatrix;
 
+	/* Post-processing resources */
+
+	// Shared across all post-process effects
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppSampler;
+	std::shared_ptr<SimpleVertexShader> postProcessVertexShader;
+
+	/* Used for specific post - process effects */
+
+	std::shared_ptr<SimplePixelShader> postProcessBlurPixelShader;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> postProcessBlurRTV; // For rendering to the texture
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> postProcessBlurSRV; // For sampling from the texture
+
+	std::shared_ptr<SimplePixelShader> postProcessAberrationPixelShader;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> postProcessAberrationRTV; // For rendering to the texture
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> postProcessAberrationSRV; // For sampling from the texture
+
+	std::shared_ptr<SimplePixelShader> postProcessPixelizationPixelShader;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> postProcessPixelizationRTV; // For rendering to the texture
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> postProcessPixelizationSRV; // For sampling from the texture
+
 	float backgroundColor[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 
 	bool isDemoWindowHidden;
@@ -145,6 +165,7 @@ private:
 	// Initialization helper methods
 	void LoadTextures();
 	void LoadShaders();
+	void InitializePostProcessEffects();
 	void CreateMaterials();
 	void CreateGeometry();
 	void CreateLights();
