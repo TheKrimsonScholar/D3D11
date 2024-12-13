@@ -20,7 +20,7 @@
 class Game
 {
 private:
-	#pragma region FilePaths
+#pragma region FilePaths
 	// File paths of all textures that will be used
 	const std::vector<std::wstring> texturePaths =
 	{
@@ -85,7 +85,7 @@ private:
 			}
 		}
 	};
-	#pragma endregion
+#pragma endregion
 
 	// Shaders and shader-related constructs
 	std::shared_ptr<SimpleVertexShader> vertexShader;
@@ -114,7 +114,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppSampler;
 	std::shared_ptr<SimpleVertexShader> postProcessVertexShader;
 
-	/* Used for specific post - process effects */
+	/* Used for specific post-process effects */
 
 	std::shared_ptr<SimplePixelShader> postProcessBlurPixelShader;
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> postProcessBlurRTV; // For rendering to the texture
@@ -144,6 +144,11 @@ private:
 	std::vector<Light> lights;
 
 	float totalTime;
+
+	// Controllable post-process settings
+	int postProcessBlurAmount = 1;
+	DirectX::XMFLOAT3 postProcessAberrationAmount = { 0.009f, 0.006f, -0.006f };
+	int postProcessPixelizeAmount = 1;
 
 public:
 	// Basic OOP setup
@@ -178,6 +183,8 @@ private:
 	// ImGUI implementation
 	void UpdateImGui(float deltaTime, float totalTime) const;
 	void BuildUI();
+
+	void UpdatePostProcessRenderTargets();
 
 	void UpdateShadowMapMatrices(Light directionalLight);
 };

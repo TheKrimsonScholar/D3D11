@@ -15,13 +15,14 @@ SamplerState Sampler : register(s0);
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
-    //return Pixels.Sample(Sampler, input.uv);
+    /* Pixelization algorithm from 
+    https://lettier.github.io/3d-game-shaders-for-beginners/pixelization.html */
     
     float2 textureSize;
     Pixels.GetDimensions(textureSize.x, textureSize.y);
     
-    float x = int(input.position.x) % pixelSize;
-    float y = int(input.position.y) % pixelSize;
+    float x = uint(input.position.x) % pixelSize;
+    float y = uint(input.position.y) % pixelSize;
     
     x = floor(pixelSize / 2.0f) - x;
     y = floor(pixelSize / 2.0f) - y;

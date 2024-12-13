@@ -178,20 +178,17 @@ void Game::InitializePostProcessEffects()
 	blurTextureDesc.SampleDesc.Quality = 0;
 	blurTextureDesc.Usage = D3D11_USAGE_DEFAULT;
 
-	// Create the resource (no need to track it after the views are created below)
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppBlurTexture;
 	Graphics::Device->CreateTexture2D(&blurTextureDesc, 0, ppBlurTexture.GetAddressOf());
 
-	// Create the Render Target View
+	// Render Target View
 	D3D11_RENDER_TARGET_VIEW_DESC rtvBlurDesc = {};
 	rtvBlurDesc.Format = blurTextureDesc.Format;
 	rtvBlurDesc.Texture2D.MipSlice = 0;
 	rtvBlurDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	Graphics::Device->CreateRenderTargetView(ppBlurTexture.Get(), &rtvBlurDesc, postProcessBlurRTV.ReleaseAndGetAddressOf());
 
-	// Create the Shader Resource View
-	// By passing it a null description for the SRV, we
-	// get a "default" SRV that has access to the entire resource
+	// Shader Resource View
 	Graphics::Device->CreateShaderResourceView(ppBlurTexture.Get(), 0, postProcessBlurSRV.ReleaseAndGetAddressOf());
 
 	/* Post-Process Effect 2: Chromatic Aberration */
@@ -210,20 +207,17 @@ void Game::InitializePostProcessEffects()
 	aberrationTextureDesc.SampleDesc.Quality = 0;
 	aberrationTextureDesc.Usage = D3D11_USAGE_DEFAULT;
 
-	// Create the resource (no need to track it after the views are created below)
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppAberrationTexture;
 	Graphics::Device->CreateTexture2D(&aberrationTextureDesc, 0, ppAberrationTexture.GetAddressOf());
 
-	// Create the Render Target View
+	// Render Target View
 	D3D11_RENDER_TARGET_VIEW_DESC rtvAberrationDesc = {};
 	rtvAberrationDesc.Format = aberrationTextureDesc.Format;
 	rtvAberrationDesc.Texture2D.MipSlice = 0;
 	rtvAberrationDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	Graphics::Device->CreateRenderTargetView(ppAberrationTexture.Get(), &rtvAberrationDesc, postProcessAberrationRTV.ReleaseAndGetAddressOf());
 
-	// Create the Shader Resource View
-	// By passing it a null description for the SRV, we
-	// get a "default" SRV that has access to the entire resource
+	// Shader Resource View
 	Graphics::Device->CreateShaderResourceView(ppAberrationTexture.Get(), 0, postProcessAberrationSRV.ReleaseAndGetAddressOf());
 
 	/* Post-Process Effect 3: Pixelization */
@@ -242,20 +236,17 @@ void Game::InitializePostProcessEffects()
 	pixelizationTextureDesc.SampleDesc.Quality = 0;
 	pixelizationTextureDesc.Usage = D3D11_USAGE_DEFAULT;
 
-	// Create the resource (no need to track it after the views are created below)
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppPixelizationTexture;
 	Graphics::Device->CreateTexture2D(&pixelizationTextureDesc, 0, ppPixelizationTexture.GetAddressOf());
 
-	// Create the Render Target View
+	// Render Target View
 	D3D11_RENDER_TARGET_VIEW_DESC rtvPixelizationDesc = {};
 	rtvPixelizationDesc.Format = pixelizationTextureDesc.Format;
 	rtvPixelizationDesc.Texture2D.MipSlice = 0;
 	rtvPixelizationDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	Graphics::Device->CreateRenderTargetView(ppPixelizationTexture.Get(), &rtvPixelizationDesc, postProcessPixelizationRTV.ReleaseAndGetAddressOf());
 
-	// Create the Shader Resource View
-	// By passing it a null description for the SRV, we
-	// get a "default" SRV that has access to the entire resource
+	// Shader Resource View
 	Graphics::Device->CreateShaderResourceView(ppPixelizationTexture.Get(), 0, postProcessPixelizationSRV.ReleaseAndGetAddressOf());
 }
 
@@ -583,6 +574,10 @@ void Game::OnResize()
 {
 	for(std::shared_ptr<Camera> camera : cameras)
 		camera->UpdateProjectionMatrix((float) Window::Width() / Window::Height());
+
+	// Re-generate render targets used for post-processing
+	if(Graphics::Device)
+		UpdatePostProcessRenderTargets();
 }
 
 
@@ -646,6 +641,24 @@ void Game::BuildUI()
 	// Button to toggle visibility of the ImGui demo window
 	if(ImGui::Button("Toggle Demo Window"))
 		isDemoWindowHidden = !isDemoWindowHidden;
+
+	if(ImGui::TreeNode("Post-Process Effects"))
+	{
+		ImGui::DragInt("Blur", &postProcessBlurAmount, 0.1f, 0, 100);
+		ImGui::DragFloat3("Aberration", &postProcessAberrationAmount.x, 0.0001f);
+		ImGui::DragInt("Pixelization", &postProcessPixelizeAmount, 0.1f, 1, 100);
+
+		ImGui::Text("Before Post-Processing:");
+		ImGui::Image(postProcessBlurSRV.Get(), ImVec2(256, 256));
+
+		ImGui::Text("After Box Blur:");
+		ImGui::Image(postProcessAberrationSRV.Get(), ImVec2(256, 256));
+
+		ImGui::Text("After Box Blur and Chromatic Aberration:");
+		ImGui::Image(postProcessPixelizationSRV.Get(), ImVec2(256, 256));
+
+		ImGui::TreePop();
+	}
 
 	if(ImGui::TreeNode("Shadows"))
 	{
@@ -744,6 +757,20 @@ void Game::BuildUI()
 	ImGui::End();
 }
 
+void Game::UpdatePostProcessRenderTargets()
+{
+	// Reset all relevant pointers
+	postProcessBlurRTV.Reset();
+	postProcessBlurSRV.Reset();
+	postProcessAberrationRTV.Reset();
+	postProcessAberrationSRV.Reset();
+	postProcessPixelizationRTV.Reset();
+	postProcessPixelizationSRV.Reset();
+
+	// Re-generate resources
+	InitializePostProcessEffects();
+}
+
 void Game::UpdateShadowMapMatrices(Light directionalLight)
 {
 	XMVECTOR lightDirection = XMLoadFloat3(&directionalLight.Direction);
@@ -778,7 +805,6 @@ void Game::Draw(float deltaTime, float totalTime)
 		Graphics::Context->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 		Graphics::Context->ClearRenderTargetView(postProcessBlurRTV.Get(), backgroundColor);
-		Graphics::Context->OMSetRenderTargets(1, postProcessBlurRTV.GetAddressOf(), Graphics::DepthBufferDSV.Get());
 
 		/* Shadow mapping setup */
 
@@ -815,10 +841,8 @@ void Game::Draw(float deltaTime, float totalTime)
 		viewport.Width = (float) Window::Width();
 		viewport.Height = (float) Window::Height();
 		Graphics::Context->RSSetViewports(1, &viewport);
-		Graphics::Context->OMSetRenderTargets(
-			1,
-			postProcessBlurRTV.GetAddressOf(),
-			Graphics::DepthBufferDSV.Get());
+		// Start draw by setting render target to first post-process step (results are processed by blur first before sent to back buffer)
+		Graphics::Context->OMSetRenderTargets(1, postProcessBlurRTV.GetAddressOf(), Graphics::DepthBufferDSV.Get());
 	}
 
 	// DRAW geometry
@@ -843,62 +867,60 @@ void Game::Draw(float deltaTime, float totalTime)
 		skybox->Draw(GetCamera());
 	}
 
+	/* POST-PROCESS */
 	{
 		/* Box Blur */
 
+		// Render to next post-process step
 		Graphics::Context->OMSetRenderTargets(1, postProcessAberrationRTV.GetAddressOf(), 0);
 
-		// Activate shaders and bind resources
-		// Also set any required cbuffer data (not shown)
 		postProcessVertexShader->SetShader();
 		postProcessBlurPixelShader->SetShader();
 		postProcessBlurPixelShader->SetShaderResourceView("Pixels", postProcessBlurSRV.Get());
-		postProcessBlurPixelShader->SetSamplerState("ClampSampler", ppSampler.Get());
+		postProcessBlurPixelShader->SetSamplerState("Sampler", ppSampler.Get());
 
-		postProcessBlurPixelShader->SetInt("blurRadius", 2);
+		postProcessBlurPixelShader->SetInt("blurRadius", postProcessBlurAmount);
 		postProcessBlurPixelShader->SetFloat("pixelWidth", 1.0f / Window::Width());
 		postProcessBlurPixelShader->SetFloat("pixelHeight", 1.0f / Window::Height());
 
 		postProcessBlurPixelShader->CopyAllBufferData();
 
-		Graphics::Context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
+		Graphics::Context->Draw(3, 0); // Draw exactly 3 vertices (one fullscreen triangle)
 
 		/* Chromatic Aberration */
 
+		// Render to next post-process step
 		Graphics::Context->OMSetRenderTargets(1, postProcessPixelizationRTV.GetAddressOf(), 0);
 
-		// Activate shaders and bind resources
-		// Also set any required cbuffer data (not shown)
 		postProcessVertexShader->SetShader();
 		postProcessAberrationPixelShader->SetShader();
 		postProcessAberrationPixelShader->SetShaderResourceView("Pixels", postProcessAberrationSRV.Get());
 		postProcessAberrationPixelShader->SetSamplerState("Sampler", ppSampler.Get());
 
 		postProcessAberrationPixelShader->SetFloat2("mouseFocusPoint", { 0, 0 });
-		postProcessAberrationPixelShader->SetFloat("redOffset", 0.009f);
-		postProcessAberrationPixelShader->SetFloat("greenOffset", 0.006f);
-		postProcessAberrationPixelShader->SetFloat("blueOffset", -0.006f);
+		postProcessAberrationPixelShader->SetFloat("redOffset", postProcessAberrationAmount.x);
+		postProcessAberrationPixelShader->SetFloat("greenOffset", postProcessAberrationAmount.y);
+		postProcessAberrationPixelShader->SetFloat("blueOffset", postProcessAberrationAmount.z);
 
 		postProcessAberrationPixelShader->CopyAllBufferData();
 
-		Graphics::Context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
+		Graphics::Context->Draw(3, 0); // Draw exactly 3 vertices (one fullscreen triangle)
 
 		/* Pixelation */
 
+		// Render to the back buffer this time, since it's the last post-process step
 		Graphics::Context->OMSetRenderTargets(1, Graphics::BackBufferRTV.GetAddressOf(), 0);
 
-		// Activate shaders and bind resources
-		// Also set any required cbuffer data (not shown)
 		postProcessVertexShader->SetShader();
 		postProcessPixelizationPixelShader->SetShader();
 		postProcessPixelizationPixelShader->SetShaderResourceView("Pixels", postProcessPixelizationSRV.Get());
 		postProcessPixelizationPixelShader->SetSamplerState("Sampler", ppSampler.Get());
 
-		postProcessPixelizationPixelShader->SetInt("pixelSize", 5);
+		postProcessPixelizationPixelShader->SetInt("pixelSize", postProcessPixelizeAmount);
 
 		postProcessPixelizationPixelShader->CopyAllBufferData();
 
-		Graphics::Context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
+		Graphics::Context->Draw(3, 0); // Draw exactly 3 vertices (one fullscreen triangle)
 	}
 
 	// Frame END

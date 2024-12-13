@@ -13,15 +13,10 @@ struct VertexToPixel
 
 Texture2D Pixels : register(t0);
 
-SamplerState ClampSampler : register(s0);
+SamplerState Sampler : register(s0);
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
-    //return float4(input.uv, 0, 1);
-    //float4 original = Pixels.Sample(ClampSampler, input.uv);
-    //return original;
-    //return float4(pixelHeight * 100, 0, 0, 1);
-    
     // Track the total color and number of samples
     float4 total = 0;
     int sampleCount = 0;
@@ -36,7 +31,7 @@ float4 main(VertexToPixel input) : SV_TARGET
             uv += float2(x * pixelWidth, y * pixelHeight);
             
             // Add this color to the running total
-            total += Pixels.Sample(ClampSampler, uv);
+            total += Pixels.Sample(Sampler, uv);
             sampleCount++;
         }
     }
