@@ -15,6 +15,7 @@ SamplerState Sampler : register(s0);
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
+    //return float4(1, 1, 1, 1);
     /* Pixelization algorithm from 
     https://lettier.github.io/3d-game-shaders-for-beginners/pixelization.html */
     

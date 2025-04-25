@@ -16,6 +16,7 @@
 #include "Material.h"
 #include "Lights.h"
 #include "Skybox.h"
+#include "ParticleSystem.h"
 
 class Game
 {
@@ -71,6 +72,8 @@ private:
 		L"../../Assets/Textures/PBR/rough_metal.png",
 		L"../../Assets/Textures/PBR/scratched_metal.png",
 		L"../../Assets/Textures/PBR/wood_metal.png",
+
+		L"../../Assets/Textures/Particles/Transparent/smoke_01.png"
 	};
 	const std::unordered_map<std::wstring, std::vector<std::wstring>> cubemapPaths =
 	{
@@ -98,6 +101,9 @@ private:
 
 	std::unordered_map<std::wstring, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> textureSRVs;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
+
+	Microsoft::WRL::ComPtr<ID3D11BlendState> particleBlendState;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> particleDepthState;
 
 	// Shadow mapping resources
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowDSV;
@@ -140,6 +146,7 @@ private:
 	std::vector<std::shared_ptr<Material>> materials;
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Entity>> entities;
+	std::vector<std::shared_ptr<ParticleSystem>> particleSystems;
 
 	std::vector<Light> lights;
 
@@ -171,6 +178,7 @@ private:
 	void LoadTextures();
 	void LoadShaders();
 	void InitializePostProcessEffects();
+	void InitializeParticles();
 	void CreateMaterials();
 	void CreateGeometry();
 	void CreateLights();

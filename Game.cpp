@@ -6,6 +6,7 @@
 #include "Window.h"
 #include <memory>
 #include <iostream>
+#include "ParticleSystem.h"
 
 // From DirectX Tool Kit
 #include "WICTextureLoader.h"
@@ -40,6 +41,7 @@ void Game::Initialize()
 	CreateGeometry();
 	CreateLights();
 	InitializePostProcessEffects();
+	InitializeParticles();
 
 	// Set initial graphics API state
 	//  - These settings persist until we change them
@@ -149,6 +151,15 @@ void Game::LoadShaders()
 	postProcessBlurPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSBoxBlur.cso").c_str());
 	postProcessAberrationPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSChromaticAberration.cso").c_str());
 	postProcessPixelizationPixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSPixelization.cso").c_str());
+
+	ParticleSystem::particleVertexShader = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context, FixPath(L"VSParticles.cso").c_str());
+	ParticleSystem::particlePixelShader = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PSParticles.cso").c_str());
+
+	/* Compute shaders */
+	ParticleSystem::particleComputeShaderInitialize = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Particles_Initialize.cso").c_str());
+	ParticleSystem::particleComputeShaderEmit = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Particles_Emit.cso").c_str());
+	ParticleSystem::particleComputeShaderUpdate = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Particles_Update.cso").c_str());
+	ParticleSystem::particleComputeShaderDraw = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Particles_Draw.cso").c_str());
 }
 
 void Game::InitializePostProcessEffects()
@@ -249,6 +260,27 @@ void Game::InitializePostProcessEffects()
 	// Shader Resource View
 	Graphics::Device->CreateShaderResourceView(ppPixelizationTexture.Get(), 0, postProcessPixelizationSRV.ReleaseAndGetAddressOf());
 }
+void Game::InitializeParticles()
+{
+	D3D11_BLEND_DESC particleBlendDesc = {};
+	particleBlendDesc.RenderTarget[0].BlendEnable = TRUE;
+	particleBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA; // Source alpha
+	particleBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA; // Inverse source alpha
+	particleBlendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD; // Additive blending
+	particleBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE; // Alpha blending
+	particleBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	particleBlendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	particleBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	Graphics::Device->CreateBlendState(&particleBlendDesc, particleBlendState.GetAddressOf());
+
+	D3D11_DEPTH_STENCIL_DESC particleStencilDesc = {};
+	particleStencilDesc.DepthEnable = true;
+	particleStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // Turns off depth writing
+	particleStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+
+	Graphics::Device->CreateDepthStencilState(&particleStencilDesc, particleDepthState.GetAddressOf());
+}
 
 void Game::CreateMaterials()
 {
@@ -261,6 +293,8 @@ void Game::CreateMaterials()
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1))); // Textured material (wood)
 
 	materials.push_back(std::make_shared<Material>(vertexShader, pixelShader, XMFLOAT4(1, 1, 1, 1), XMFLOAT2(5, 5))); // Floor material
+
+	materials.push_back(std::make_shared<Material>(ParticleSystem::particleVertexShader, ParticleSystem::particlePixelShader, XMFLOAT4(1, 1, 1, 1))); // Particle material
 
 	/* Materials with albedo, normals, roughness, metalness maps (PBR) */
 
@@ -327,6 +361,9 @@ void Game::CreateMaterials()
 	materials[7]->AddTextureSRV("ShadowMap", shadowSRV);
 	materials[7]->AddSampler("BasicSampler", sampler);
 	materials[7]->AddSampler("ShadowSampler", shadowSampler);
+
+	materials[8]->AddTextureSRV("AlbedoTexture", textureSRVs[L"smoke_01.png"]);
+	materials[8]->AddSampler("BasicSampler", sampler);
 }
 
 // --------------------------------------------------------
@@ -363,6 +400,22 @@ void Game::CreateGeometry()
 			entities.push_back(newEntity);
 		}
 	}
+
+	/* Create particle systems */
+	std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(
+		DirectX::XMFLOAT3(0, 0, 0), DirectX::XMFLOAT3(0, 0, 0), DirectX::XMFLOAT3(1, 1, 1), materials[8]);
+	particleSystem->SetMaxParticles(1000);
+	particleSystem->SetEmissionPeriodRange(0.01f, 0.05f);
+	particleSystem->SetEmissionCountRange(1, 5);
+	particleSystem->SetColorTintRange(DirectX::XMFLOAT4(0, 0, 0, 1), DirectX::XMFLOAT4(1, 1, 1, 1));
+	particleSystem->SetParticleLifetimeRange(1.0f, 5.0f);
+	particleSystem->SetParticleRotationRange(0, DirectX::XM_PI);
+	particleSystem->SetParticleLocationRange(DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f));
+	particleSystem->SetParticleVelocityRange(DirectX::XMFLOAT3(-1, -1, -1), DirectX::XMFLOAT3(1, 1, 1));
+	particleSystem->SetParticleAccelerationRange(DirectX::XMFLOAT3(0, 1, 0), DirectX::XMFLOAT3(0, 1, 0));
+	particleSystem->Initialize();
+
+	particleSystems.push_back(particleSystem);
 }
 
 void Game::CreateLights()
@@ -606,6 +659,9 @@ void Game::Update(float deltaTime, float totalTime)
 			entities[i]->GetTransform()->GetLocation().y, 
 			5 + sin(i * totalTime / 10.0f) * 5);
 	}
+
+	for(std::shared_ptr<ParticleSystem> particleSystem : particleSystems)
+		particleSystem->Update(deltaTime);
 }
 
 void Game::UpdateImGui(float deltaTime, float totalTime) const
@@ -862,6 +918,18 @@ void Game::Draw(float deltaTime, float totalTime)
 
 			e->Draw(GetCamera(), totalTime);
 		}
+
+		// Set the blend and depth states before rendering particles
+		Graphics::Context->OMSetBlendState(particleBlendState.Get(), 0, 0xffffffff);
+		Graphics::Context->OMSetDepthStencilState(particleDepthState.Get(), 0);
+
+		for(std::shared_ptr<ParticleSystem> particleSystem : particleSystems)
+			particleSystem->Draw(GetCamera());
+
+		// Reset states
+		Graphics::Context->OMSetBlendState(0, 0, 0xffffffff);
+		Graphics::Context->OMSetDepthStencilState(0, 0);
+		Graphics::Context->RSSetState(0);
 
 		// Draw skybox
 		skybox->Draw(GetCamera());
