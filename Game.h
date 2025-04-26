@@ -17,6 +17,7 @@
 #include "Lights.h"
 #include "Skybox.h"
 #include "ParticleSystem.h"
+#include "FluidVolume.h"
 
 class Game
 {
@@ -147,6 +148,7 @@ private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Entity>> entities;
 	std::vector<std::shared_ptr<ParticleSystem>> particleSystems;
+	std::vector<std::shared_ptr<FluidVolume>> fluidVolumes;
 
 	std::vector<Light> lights;
 
@@ -179,6 +181,7 @@ private:
 	void LoadShaders();
 	void InitializePostProcessEffects();
 	void InitializeParticles();
+	void InitializeFluids();
 	void CreateMaterials();
 	void CreateGeometry();
 	void CreateLights();
