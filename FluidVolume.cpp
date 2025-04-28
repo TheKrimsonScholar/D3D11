@@ -6,6 +6,11 @@ FluidVolume::FluidVolume()
 {
 
 }
+FluidVolume::FluidVolume(DirectX::XMFLOAT3 location, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 scale) : 
+	transform(location, rotation, scale)
+{
+
+}
 FluidVolume::~FluidVolume()
 {
 
@@ -14,6 +19,47 @@ FluidVolume::~FluidVolume()
 void FluidVolume::Initialize()
 {
 	CreateBuffers();
+
+	/* Initialize */
+	{
+		fluidComputeShaderInitialize->SetShader();
+
+		fluidComputeShaderInitialize->SetUnorderedAccessView("VelocityCurrent", velocityCurrentUAV.Get());
+		fluidComputeShaderInitialize->SetUnorderedAccessView("PressureCurrent", pressureCurrentUAV.Get());
+		fluidComputeShaderInitialize->SetUnorderedAccessView("DensityCurrent", densityCurrentUAV.Get());
+		
+		fluidComputeShaderInitialize->CopyAllBufferData();
+
+		fluidComputeShaderInitialize->DispatchByThreads(width, height, depth);
+
+		ID3D11UnorderedAccessView* nullUAVs[8] = {};
+		Graphics::Context->CSSetUnorderedAccessViews(0, 8, nullUAVs, nullptr);
+
+		// Swap buffers
+		/*auto tempTexture = densityCurrentTexture;
+		densityCurrentTexture = densityPreviousTexture;
+		densityPreviousTexture = tempTexture;
+
+		auto tempSRV = densityCurrentSRV;
+		densityCurrentSRV = densityPreviousSRV;
+		densityPreviousSRV = tempSRV;
+
+		auto tempUAV = densityCurrentUAV;
+		densityCurrentUAV = densityPreviousUAV;
+		densityPreviousUAV = tempUAV;*/
+
+		std::swap(velocityPreviousTexture, velocityCurrentTexture);
+		std::swap(velocityPreviousSRV, velocityCurrentSRV);
+		std::swap(velocityPreviousUAV, velocityCurrentUAV);
+
+		std::swap(pressurePreviousTexture, pressureCurrentTexture);
+		std::swap(pressurePreviousSRV, pressureCurrentSRV);
+		std::swap(pressurePreviousUAV, pressureCurrentUAV);
+
+		std::swap(densityPreviousTexture, densityCurrentTexture);
+		std::swap(densityPreviousSRV, densityCurrentSRV);
+		std::swap(densityPreviousUAV, densityCurrentUAV);
+	}
 }
 void FluidVolume::CreateBuffers()
 {
@@ -24,8 +70,8 @@ void FluidVolume::CreateBuffers()
 		velocityPreviousTextureDesc.Width = width;
 		velocityPreviousTextureDesc.Height = height;
 		velocityPreviousTextureDesc.Depth = depth;
-		velocityPreviousTextureDesc.Format = DXGI_FORMAT_R32G32B32_FLOAT;
-		velocityPreviousTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		velocityPreviousTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		velocityPreviousTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 
 		Graphics::Device->CreateTexture3D(&velocityPreviousTextureDesc, nullptr, velocityPreviousTexture.GetAddressOf());
 
@@ -34,8 +80,8 @@ void FluidVolume::CreateBuffers()
 		velocityCurrentTextureDesc.Width = width;
 		velocityCurrentTextureDesc.Height = height;
 		velocityCurrentTextureDesc.Depth = depth;
-		velocityCurrentTextureDesc.Format = DXGI_FORMAT_R32G32B32_FLOAT;
-		velocityCurrentTextureDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+		velocityCurrentTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		velocityCurrentTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 
 		Graphics::Device->CreateTexture3D(&velocityCurrentTextureDesc, nullptr, velocityCurrentTexture.GetAddressOf());
 
@@ -43,13 +89,31 @@ void FluidVolume::CreateBuffers()
 		D3D11_SHADER_RESOURCE_VIEW_DESC velocityPreviousSRVDesc = {};
 		velocityPreviousSRVDesc.Format = velocityPreviousTextureDesc.Format;
 		velocityPreviousSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+		velocityPreviousSRVDesc.Texture3D.MipLevels = 1;
 
 		Graphics::Device->CreateShaderResourceView(velocityPreviousTexture.Get(), &velocityPreviousSRVDesc, velocityPreviousSRV.GetAddressOf());
+
+		// Previous Velocity UAV
+		D3D11_UNORDERED_ACCESS_VIEW_DESC velocityPreviousUAVDesc = {};
+		velocityPreviousUAVDesc.Format = velocityPreviousTextureDesc.Format;
+		velocityPreviousUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+		velocityPreviousUAVDesc.Texture3D.WSize = velocityPreviousTextureDesc.Depth;
+
+		Graphics::Device->CreateUnorderedAccessView(velocityPreviousTexture.Get(), &velocityPreviousUAVDesc, velocityPreviousUAV.GetAddressOf());
+
+		// Current Velocity SRV
+		D3D11_SHADER_RESOURCE_VIEW_DESC velocityCurrentSRVDesc = {};
+		velocityCurrentSRVDesc.Format = velocityCurrentTextureDesc.Format;
+		velocityCurrentSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+		velocityCurrentSRVDesc.Texture3D.MipLevels = 1;
+
+		Graphics::Device->CreateShaderResourceView(velocityCurrentTexture.Get(), &velocityCurrentSRVDesc, velocityCurrentSRV.GetAddressOf());
 
 		// Current Velocity UAV
 		D3D11_UNORDERED_ACCESS_VIEW_DESC velocityCurrentUAVDesc = {};
 		velocityCurrentUAVDesc.Format = velocityCurrentTextureDesc.Format;
 		velocityCurrentUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+		velocityCurrentUAVDesc.Texture3D.WSize = velocityCurrentTextureDesc.Depth;
 
 		Graphics::Device->CreateUnorderedAccessView(velocityCurrentTexture.Get(), &velocityCurrentUAVDesc, velocityCurrentUAV.GetAddressOf());
 	}
@@ -62,7 +126,7 @@ void FluidVolume::CreateBuffers()
 		pressurePreviousTextureDesc.Height = height;
 		pressurePreviousTextureDesc.Depth = depth;
 		pressurePreviousTextureDesc.Format = DXGI_FORMAT_R32_FLOAT;
-		pressurePreviousTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		pressurePreviousTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 
 		Graphics::Device->CreateTexture3D(&pressurePreviousTextureDesc, nullptr, pressurePreviousTexture.GetAddressOf());
 
@@ -72,7 +136,7 @@ void FluidVolume::CreateBuffers()
 		pressureCurrentTextureDesc.Height = height;
 		pressureCurrentTextureDesc.Depth = depth;
 		pressureCurrentTextureDesc.Format = DXGI_FORMAT_R32_FLOAT;
-		pressureCurrentTextureDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+		pressureCurrentTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 
 		Graphics::Device->CreateTexture3D(&pressureCurrentTextureDesc, nullptr, pressureCurrentTexture.GetAddressOf());
 
@@ -80,13 +144,31 @@ void FluidVolume::CreateBuffers()
 		D3D11_SHADER_RESOURCE_VIEW_DESC pressurePreviousSRVDesc = {};
 		pressurePreviousSRVDesc.Format = pressurePreviousTextureDesc.Format;
 		pressurePreviousSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+		pressurePreviousSRVDesc.Texture3D.MipLevels = 1;
 
 		Graphics::Device->CreateShaderResourceView(pressurePreviousTexture.Get(), &pressurePreviousSRVDesc, pressurePreviousSRV.GetAddressOf());
+
+		// Previous Pressure UAV
+		D3D11_UNORDERED_ACCESS_VIEW_DESC pressurePreviousUAVDesc = {};
+		pressurePreviousUAVDesc.Format = pressurePreviousTextureDesc.Format;
+		pressurePreviousUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+		pressurePreviousUAVDesc.Texture3D.WSize = pressurePreviousTextureDesc.Depth;
+
+		Graphics::Device->CreateUnorderedAccessView(pressurePreviousTexture.Get(), &pressurePreviousUAVDesc, pressurePreviousUAV.GetAddressOf());
+
+		// Current Pressure SRV
+		D3D11_SHADER_RESOURCE_VIEW_DESC pressureCurrentSRVDesc = {};
+		pressureCurrentSRVDesc.Format = pressureCurrentTextureDesc.Format;
+		pressureCurrentSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+		pressureCurrentSRVDesc.Texture3D.MipLevels = 1;
+
+		Graphics::Device->CreateShaderResourceView(pressureCurrentTexture.Get(), &pressureCurrentSRVDesc, pressureCurrentSRV.GetAddressOf());
 
 		// Current Pressure UAV
 		D3D11_UNORDERED_ACCESS_VIEW_DESC pressureCurrentUAVDesc = {};
 		pressureCurrentUAVDesc.Format = pressureCurrentTextureDesc.Format;
 		pressureCurrentUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+		pressureCurrentUAVDesc.Texture3D.WSize = pressureCurrentTextureDesc.Depth;
 
 		Graphics::Device->CreateUnorderedAccessView(pressureCurrentTexture.Get(), &pressureCurrentUAVDesc, pressureCurrentUAV.GetAddressOf());
 	}
@@ -107,6 +189,7 @@ void FluidVolume::CreateBuffers()
 		D3D11_SHADER_RESOURCE_VIEW_DESC divergenceSRVDesc = {};
 		divergenceSRVDesc.Format = divergenceTextureDesc.Format;
 		divergenceSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+		divergenceSRVDesc.Texture3D.MipLevels = 1;
 
 		Graphics::Device->CreateShaderResourceView(divergenceTexture.Get(), &divergenceSRVDesc, divergenceSRV.GetAddressOf());
 
@@ -114,6 +197,7 @@ void FluidVolume::CreateBuffers()
 		D3D11_UNORDERED_ACCESS_VIEW_DESC divergenceUAVDesc = {};
 		divergenceUAVDesc.Format = divergenceTextureDesc.Format;
 		divergenceUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+		divergenceUAVDesc.Texture3D.WSize = divergenceTextureDesc.Depth;
 
 		Graphics::Device->CreateUnorderedAccessView(pressureCurrentTexture.Get(), &divergenceUAVDesc, divergenceUAV.GetAddressOf());
 	}
@@ -125,8 +209,10 @@ void FluidVolume::CreateBuffers()
 		densityPreviousTextureDesc.Width = width;
 		densityPreviousTextureDesc.Height = height;
 		densityPreviousTextureDesc.Depth = depth;
+		densityPreviousTextureDesc.MipLevels = 1;
 		densityPreviousTextureDesc.Format = DXGI_FORMAT_R32_FLOAT;
-		densityPreviousTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		densityPreviousTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+		densityPreviousTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 
 		Graphics::Device->CreateTexture3D(&densityPreviousTextureDesc, nullptr, densityPreviousTexture.GetAddressOf());
 
@@ -135,8 +221,10 @@ void FluidVolume::CreateBuffers()
 		densityCurrentTextureDesc.Width = width;
 		densityCurrentTextureDesc.Height = height;
 		densityCurrentTextureDesc.Depth = depth;
+		densityPreviousTextureDesc.MipLevels = 1;
 		densityCurrentTextureDesc.Format = DXGI_FORMAT_R32_FLOAT;
-		densityCurrentTextureDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+		densityCurrentTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+		densityCurrentTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 
 		Graphics::Device->CreateTexture3D(&densityCurrentTextureDesc, nullptr, densityCurrentTexture.GetAddressOf());
 
@@ -144,13 +232,31 @@ void FluidVolume::CreateBuffers()
 		D3D11_SHADER_RESOURCE_VIEW_DESC densityPreviousSRVDesc = {};
 		densityPreviousSRVDesc.Format = densityPreviousTextureDesc.Format;
 		densityPreviousSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+		densityPreviousSRVDesc.Texture3D.MipLevels = 1;
 
 		Graphics::Device->CreateShaderResourceView(densityPreviousTexture.Get(), &densityPreviousSRVDesc, densityPreviousSRV.GetAddressOf());
+
+		// Previous Density UAV
+		D3D11_UNORDERED_ACCESS_VIEW_DESC densityPreviousUAVDesc = {};
+		densityPreviousUAVDesc.Format = densityPreviousTextureDesc.Format;
+		densityPreviousUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+		densityPreviousUAVDesc.Texture3D.WSize = densityPreviousTextureDesc.Depth;
+
+		Graphics::Device->CreateUnorderedAccessView(densityPreviousTexture.Get(), &densityPreviousUAVDesc, densityPreviousUAV.GetAddressOf());
+
+		// Current Density SRV
+		D3D11_SHADER_RESOURCE_VIEW_DESC densityCurrentSRVDesc = {};
+		densityCurrentSRVDesc.Format = densityCurrentTextureDesc.Format;
+		densityCurrentSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+		densityCurrentSRVDesc.Texture3D.MipLevels = 1;
+
+		Graphics::Device->CreateShaderResourceView(densityCurrentTexture.Get(), &densityCurrentSRVDesc, densityCurrentSRV.GetAddressOf());
 
 		// Current Density UAV
 		D3D11_UNORDERED_ACCESS_VIEW_DESC densityCurrentUAVDesc = {};
 		densityCurrentUAVDesc.Format = densityCurrentTextureDesc.Format;
 		densityCurrentUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+		densityCurrentUAVDesc.Texture3D.WSize = densityCurrentTextureDesc.Depth;
 
 		Graphics::Device->CreateUnorderedAccessView(densityCurrentTexture.Get(), &densityCurrentUAVDesc, densityCurrentUAV.GetAddressOf());
 	}
@@ -174,6 +280,8 @@ void FluidVolume::Update(float deltaTime)
 {
 	/* Advection */
 	{
+		fluidComputeShaderAdvection->SetShader();
+
 		fluidComputeShaderAdvection->SetShaderResourceView("VelocityPrevious", velocityPreviousSRV);
 		fluidComputeShaderAdvection->SetShaderResourceView("PressurePrevious", pressurePreviousSRV);
 		fluidComputeShaderAdvection->SetShaderResourceView("DensityPrevious", densityPreviousSRV);
@@ -190,14 +298,30 @@ void FluidVolume::Update(float deltaTime)
 
 		fluidComputeShaderAdvection->DispatchByThreads(width, height, depth);
 
+		ID3D11ShaderResourceView* nullSRVs[8] = {};
+		Graphics::Context->CSSetShaderResources(0, 8, nullSRVs);
+		ID3D11UnorderedAccessView* nullUAVs[8] = {};
+		Graphics::Context->CSSetUnorderedAccessViews(0, 8, nullUAVs, nullptr);
+
 		// Swap buffers
 		std::swap(velocityPreviousTexture, velocityCurrentTexture);
+		std::swap(velocityPreviousSRV, velocityCurrentSRV);
+		std::swap(velocityPreviousUAV, velocityCurrentUAV);
+
 		std::swap(pressurePreviousTexture, pressureCurrentTexture);
+		std::swap(pressurePreviousSRV, pressureCurrentSRV);
+		std::swap(pressurePreviousUAV, pressureCurrentUAV);
+
 		std::swap(densityPreviousTexture, densityCurrentTexture);
+		std::swap(densityPreviousSRV, densityCurrentSRV);
+		std::swap(densityPreviousUAV, densityCurrentUAV);
 	}
+	//return;
 
 	/* Divergence */
 	{
+		fluidComputeShaderDivergence->SetShader();
+
 		fluidComputeShaderDivergence->SetShaderResourceView("VelocityPrevious", velocityPreviousSRV);
 
 		fluidComputeShaderDivergence->SetUnorderedAccessView("Divergence", divergenceUAV);
@@ -205,10 +329,17 @@ void FluidVolume::Update(float deltaTime)
 		fluidComputeShaderDivergence->CopyAllBufferData();
 
 		fluidComputeShaderDivergence->DispatchByThreads(width, height, depth);
+
+		ID3D11ShaderResourceView* nullSRVs[8] = {};
+		Graphics::Context->CSSetShaderResources(0, 8, nullSRVs);
+		ID3D11UnorderedAccessView* nullUAVs[8] = {};
+		Graphics::Context->CSSetUnorderedAccessViews(0, 8, nullUAVs, nullptr);
 	}
 
 	/* Pressure */
 	{
+		fluidComputeShaderPressure->SetShader();
+
 		fluidComputeShaderPressure->SetShaderResourceView("PressurePrevious", pressurePreviousSRV);
 		fluidComputeShaderPressure->SetShaderResourceView("Divergence", divergenceSRV);
 
@@ -218,12 +349,21 @@ void FluidVolume::Update(float deltaTime)
 
 		fluidComputeShaderPressure->DispatchByThreads(width, height, depth);
 
+		ID3D11ShaderResourceView* nullSRVs[8] = {};
+		Graphics::Context->CSSetShaderResources(0, 8, nullSRVs);
+		ID3D11UnorderedAccessView* nullUAVs[8] = {};
+		Graphics::Context->CSSetUnorderedAccessViews(0, 8, nullUAVs, nullptr);
+
 		// Swap buffers
 		std::swap(pressurePreviousTexture, pressureCurrentTexture);
+		std::swap(pressurePreviousSRV, pressureCurrentSRV);
+		std::swap(pressurePreviousUAV, pressureCurrentUAV);
 	}
 
 	/* Projection */
 	{
+		fluidComputeShaderProjection->SetShader();
+
 		fluidComputeShaderProjection->SetShaderResourceView("VelocityPrevious", velocityPreviousSRV);
 		fluidComputeShaderProjection->SetShaderResourceView("PressurePrevious", pressurePreviousSRV);
 
@@ -232,6 +372,16 @@ void FluidVolume::Update(float deltaTime)
 		fluidComputeShaderProjection->CopyAllBufferData();
 
 		fluidComputeShaderProjection->DispatchByThreads(width, height, depth);
+
+		ID3D11ShaderResourceView* nullSRVs[8] = {};
+		Graphics::Context->CSSetShaderResources(0, 8, nullSRVs);
+		ID3D11UnorderedAccessView* nullUAVs[8] = {};
+		Graphics::Context->CSSetUnorderedAccessViews(0, 8, nullUAVs, nullptr);
+
+		// Swap buffers
+		std::swap(velocityPreviousTexture, velocityCurrentTexture);
+		std::swap(velocityPreviousSRV, velocityCurrentSRV);
+		std::swap(velocityPreviousUAV, velocityCurrentUAV);
 	}
 }
 void FluidVolume::Draw(std::shared_ptr<Camera> camera)
@@ -251,6 +401,18 @@ void FluidVolume::Draw(std::shared_ptr<Camera> camera)
 	fluidVertexShader->SetMatrix4x4("worldMatrix", transform.GetWorldMatrix());
 	fluidVertexShader->SetMatrix4x4("viewMatrix", camera->GetViewMatrix());
 	fluidVertexShader->SetMatrix4x4("projMatrix", camera->GetProjectionMatrix());
+
+	fluidPixelShader->SetShaderResourceView("DensityPrevious", densityPreviousSRV);
+
+	fluidPixelShader->SetSamplerState("Sampler", sampler);
+
+	fluidPixelShader->SetMatrix4x4("worldMatrix", transform.GetWorldMatrix());
+	DirectX::XMFLOAT4X4 f44_worldMatrix = transform.GetWorldMatrix();
+	DirectX::XMMATRIX worldMatrix = DirectX::XMLoadFloat4x4(&f44_worldMatrix);
+	DirectX::XMFLOAT4X4 inverse;
+	DirectX::XMStoreFloat4x4(&inverse, DirectX::XMMatrixInverse(nullptr, worldMatrix));
+	fluidPixelShader->SetMatrix4x4("worldInverseMatrix", inverse);
+	fluidPixelShader->SetFloat3("cameraLocation", camera->GetTransform().GetLocation());
 
 	fluidVertexShader->CopyAllBufferData();
 	fluidPixelShader->CopyAllBufferData();

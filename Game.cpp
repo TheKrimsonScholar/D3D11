@@ -41,6 +41,7 @@ void Game::Initialize()
 	CreateLights();
 	InitializePostProcessEffects();
 	InitializeParticles();
+	InitializeFluids();
 
 	// Set initial graphics API state
 	//  - These settings persist until we change them
@@ -163,6 +164,7 @@ void Game::LoadShaders()
 	ParticleSystem::particleComputeShaderUpdate = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Particles_Update.cso").c_str());
 	ParticleSystem::particleComputeShaderDraw = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Particles_Draw.cso").c_str());
 
+	FluidVolume::fluidComputeShaderInitialize = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Initialize.cso").c_str());
 	FluidVolume::fluidComputeShaderAdvection = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Advection.cso").c_str());
 	FluidVolume::fluidComputeShaderDivergence = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Divergence.cso").c_str());
 	FluidVolume::fluidComputeShaderPressure = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Pressure.cso").c_str());
@@ -409,7 +411,7 @@ void Game::CreateGeometry()
 	}
 
 	/* Fluid Volumes */
-	std::shared_ptr<FluidVolume> fluid = std::make_shared<FluidVolume>();
+	std::shared_ptr<FluidVolume> fluid = std::make_shared<FluidVolume>(XMFLOAT3(0, 0, 1), XMFLOAT3(0, 0, 0), XMFLOAT3(1, 1, 1));
 	fluidVolumes.push_back(fluid);
 }
 

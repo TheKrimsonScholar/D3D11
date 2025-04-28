@@ -11,6 +11,7 @@ private:
 	static const size_t width = 256, height = 256, depth = 256;
 
 public:
+	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderInitialize;
 	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderAdvection;
 	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderDivergence;
 	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderPressure;
@@ -25,11 +26,15 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Texture3D> velocityPreviousTexture;
 	Microsoft::WRL::ComPtr<ID3D11Texture3D> velocityCurrentTexture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> velocityPreviousSRV;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> velocityPreviousUAV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> velocityCurrentSRV;
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> velocityCurrentUAV;
 	
 	Microsoft::WRL::ComPtr<ID3D11Texture3D> pressurePreviousTexture;
 	Microsoft::WRL::ComPtr<ID3D11Texture3D> pressureCurrentTexture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pressurePreviousSRV;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> pressurePreviousUAV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pressureCurrentSRV;
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> pressureCurrentUAV;
 	
 	Microsoft::WRL::ComPtr<ID3D11Texture3D> divergenceTexture;
@@ -39,12 +44,15 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Texture3D> densityPreviousTexture;
 	Microsoft::WRL::ComPtr<ID3D11Texture3D> densityCurrentTexture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> densityPreviousSRV;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> densityPreviousUAV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> densityCurrentSRV;
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> densityCurrentUAV;
 
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 
 public:
 	FluidVolume();
+	FluidVolume(DirectX::XMFLOAT3 location, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 scale);
 	~FluidVolume();
 
 	void Initialize();

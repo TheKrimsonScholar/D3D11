@@ -3,17 +3,18 @@
 cbuffer ExternalData : register(b0)
 {
     matrix worldMatrix;
-    matrix worldInvTranspose;
+    matrix worldInverseMatrix;
     
-    float4 cameraLocation;
+    float3 cameraLocation;
 };
 
-Texture3D<float3> DensityPrevious : register(t0);
+Texture3D<float> DensityPrevious : register(t0);
 
 SamplerState Sampler : register(s0);
 
 float4 main(VertexToPixel_Fluid input) : SV_TARGET
 {
+    //return float4(0, 0, 0, 0);
     static const float3 BOX_NORMALS[6] =
     {
         float3(-1, 0, 0), // Left
@@ -27,7 +28,7 @@ float4 main(VertexToPixel_Fluid input) : SV_TARGET
     float3 rayOrigin = cameraLocation;
     float3 rayDirection = normalize(input.worldPosition - cameraLocation);
 	
-    return float4(1, 1, 1, 1);
+    //return float4(1, 1, 1, 1);
     
 	/* Ray-OBB Intersection */
 	
@@ -40,7 +41,7 @@ float4 main(VertexToPixel_Fluid input) : SV_TARGET
         float3 normal = normalize(p - center); // Plane normal
         float offset = dot(normal, p); // Plane offset
 
-        float t = (dot(normal, rayOrigin) - offset) / dot(normal, rayDirection); // Intersection coordinate
+        float t = (offset - dot(normal, rayOrigin)) / dot(normal, rayDirection); // Intersection coordinate
         // If the ray is in the same direction as the normal, t is an upper bound (exit point)
         if(dot(rayDirection, normal) > 0)
             tMax = min(tMax, t);
@@ -51,22 +52,26 @@ float4 main(VertexToPixel_Fluid input) : SV_TARGET
     
     /* Ray-marching */
     
-    float dt = 0.1f;
-    dt = (tMax - tMin) / 1000.0f;
+    //return float4(tMax / 4.0f, 0, 0, 1);
+    float dt = 0.01f;
+    //dt = (tMax - tMin) / 10.0f;
+    //return float4(DensityPrevious[uint3(0, 0, 0)], 0, 0, 1);
+    //return float4(DensityPrevious.SampleLevel(Sampler, float3(0, 0, 0), 0), 0, 0, 1);
+    //return float4(dt, 0, 0, 1);
     for(float t = tMin; t < tMax; t += dt)
     {
         // Sample the fluid density at this point
         float3 worldPosition = rayOrigin + rayDirection * t;
-        float3 samplePosition = mul(worldInvTranspose, float4(worldPosition, 1)); // Convert to grid coordinates (-0.5f to 0.5f)
+        float3 samplePosition = mul(worldInverseMatrix, float4(worldPosition, 1)); // Convert to grid coordinates (-0.5f to 0.5f)
+        samplePosition /= 2;
         samplePosition += float3(0.5f, 0.5f, 0.5f); // Normalized UVW coordinates
         
         float density = DensityPrevious.SampleLevel(Sampler, samplePosition, 0);
         
         // If the density is above a certain threshold, we have hit the fluid
-        if (density > 0.5f)
-            return float4(1.0f, 1.0f, 1.0f, 1.0f);
+        if(density > 0)
+            return float4(t / tMax, 1.0f, 1.0f, 1.0f);
     }
-    
 	
-	return float4(1.0f, 1.0f, 1.0f, 1.0f);
+	return float4(0.0f, 0.0f, 0.0f, 0.0f);
 }

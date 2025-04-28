@@ -1,8 +1,8 @@
-Texture3D<float3> VelocityPrevious : register(t0);
+Texture3D<float4> VelocityPrevious : register(t0);
 
 RWTexture3D<float> Divergence : register(u0);
 
-[numthreads(1, 1, 1)]
+[numthreads(8, 8, 8)]
 void main( uint3 DTid : SV_DispatchThreadID )
 {
     float3 velocityRight = VelocityPrevious[DTid + uint3(1, 0, 0)];

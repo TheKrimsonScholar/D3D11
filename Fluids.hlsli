@@ -6,5 +6,5 @@ static const float LEVEL_SET_THRESHOLD = 0.1f;
 struct VertexToPixel_Fluid
 {
     float4 screenPosition : SV_POSITION;
-    float4 worldPosition : POSITION;
+    float3 worldPosition : POSITION;
 };
