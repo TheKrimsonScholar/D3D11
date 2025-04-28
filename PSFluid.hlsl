@@ -9,6 +9,7 @@ cbuffer ExternalData : register(b0)
 };
 
 Texture3D<float> DensityPrevious : register(t0);
+Texture3D<float> TemperaturePrevious : register(t1);
 
 SamplerState Sampler : register(s0);
 
@@ -58,6 +59,7 @@ float4 main(VertexToPixel_Fluid input) : SV_TARGET
     //return float4(DensityPrevious[uint3(0, 0, 0)], 0, 0, 1);
     //return float4(DensityPrevious.SampleLevel(Sampler, float3(0, 0, 0), 0), 0, 0, 1);
     //return float4(dt, 0, 0, 1);
+    float4 totalColor = float4(0, 0, 0, 0);
     for(float t = tMin; t < tMax; t += dt)
     {
         // Sample the fluid density at this point
@@ -66,12 +68,25 @@ float4 main(VertexToPixel_Fluid input) : SV_TARGET
         samplePosition /= 2;
         samplePosition += float3(0.5f, 0.5f, 0.5f); // Normalized UVW coordinates
         
-        float density = DensityPrevious.SampleLevel(Sampler, samplePosition, 0);
+        //float density = DensityPrevious.SampleLevel(Sampler, samplePosition, 0);
         
         // If the density is above a certain threshold, we have hit the fluid
-        if(density > 0)
-            return float4(t / tMax, 1.0f, 1.0f, 1.0f);
+        //if(density > 0.25f)
+            //return float4(t / tMax, 1.0f, 1.0f, 1.0f);
+        
+        //totalColor += float4(density, density, density, 1) * dt;
+        
+        float density = DensityPrevious.SampleLevel(Sampler, samplePosition, 0);
+        float temperature = TemperaturePrevious.SampleLevel(Sampler, samplePosition, 0);
+
+        float fireAmount = saturate((temperature - 0.5) * 2.0);
+        float smokeAmount = density * (1.0 - fireAmount);
+
+        float3 fireColor = lerp(float3(1, 0.5, 0), float3(1, 0, 0), fireAmount);
+        float3 smokeColor = float3(0.2, 0.2, 0.2);
+
+        totalColor += float4(fireAmount * fireColor + smokeAmount * smokeColor, 1);
     }
 	
-	return float4(0.0f, 0.0f, 0.0f, 0.0f);
+	return totalColor;
 }

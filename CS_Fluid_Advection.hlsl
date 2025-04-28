@@ -6,12 +6,14 @@ cbuffer ExternalData : register(b0)
 Texture3D<float4> VelocityPrevious : register(t0);
 Texture3D<float> PressurePrevious : register(t1);
 Texture3D<float> DensityPrevious : register(t2);
+Texture3D<float> TemperaturePrevious : register(t3);
 
 SamplerState Sampler : register(s0);
 
 RWTexture3D<float4> VelocityCurrent : register(u0);
 RWTexture3D<float> PressureCurrent : register(u1);
 RWTexture3D<float> DensityCurrent : register(u2);
+RWTexture3D<float> TemperatureCurrent : register(u3);
 
 [numthreads(8, 8, 8)]
 void main( uint3 DTid : SV_DispatchThreadID )
@@ -28,4 +30,7 @@ void main( uint3 DTid : SV_DispatchThreadID )
     
     // Density
     DensityCurrent[DTid] = DensityPrevious.SampleLevel(Sampler, X, 0);
+    
+    // Temperature
+    TemperatureCurrent[DTid] = TemperaturePrevious.SampleLevel(Sampler, X, 0);
 }

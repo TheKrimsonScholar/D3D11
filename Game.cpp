@@ -165,7 +165,10 @@ void Game::LoadShaders()
 	ParticleSystem::particleComputeShaderDraw = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Particles_Draw.cso").c_str());
 
 	FluidVolume::fluidComputeShaderInitialize = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Initialize.cso").c_str());
+	FluidVolume::fluidComputeShaderUpdate = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Update.cso").c_str());
 	FluidVolume::fluidComputeShaderAdvection = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Advection.cso").c_str());
+	FluidVolume::fluidComputeShaderBuoyancy = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Buoyancy.cso").c_str());
+	FluidVolume::fluidComputeShaderCooling = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Cooling.cso").c_str());
 	FluidVolume::fluidComputeShaderDivergence = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Divergence.cso").c_str());
 	FluidVolume::fluidComputeShaderPressure = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Pressure.cso").c_str());
 	FluidVolume::fluidComputeShaderProjection = std::make_shared<SimpleComputeShader>(Graphics::Device, Graphics::Context, FixPath(L"CS_Fluid_Projection.cso").c_str());

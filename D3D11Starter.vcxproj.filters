@@ -238,6 +238,15 @@
     <FxCompile Include="PSFluid.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="CS_Fluid_Buoyancy.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="CS_Fluid_Update.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="CS_Fluid_Cooling.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ShaderStructs.hlsli">

@@ -12,7 +12,10 @@ private:
 
 public:
 	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderInitialize;
+	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderUpdate;
 	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderAdvection;
+	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderBuoyancy;
+	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderCooling;
 	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderDivergence;
 	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderPressure;
 	static inline std::shared_ptr<SimpleComputeShader> fluidComputeShaderProjection;
@@ -47,6 +50,13 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> densityPreviousUAV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> densityCurrentSRV;
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> densityCurrentUAV;
+
+	Microsoft::WRL::ComPtr<ID3D11Texture3D> temperaturePreviousTexture;
+	Microsoft::WRL::ComPtr<ID3D11Texture3D> temperatureCurrentTexture;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> temperaturePreviousSRV;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> temperaturePreviousUAV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> temperatureCurrentSRV;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> temperatureCurrentUAV;
 
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 
