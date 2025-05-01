@@ -4,12 +4,12 @@ cbuffer ExternalData : register(b0)
     float coolingRate;
 };
 
-Texture3D<float> TemperaturePrevious : register(t0);
+Texture3D<float> ReactionPrevious : register(t0);
 
-RWTexture3D<float> TemperatureCurrent : register(u0);
+RWTexture3D<float> ReactionCurrent : register(u0);
 
 [numthreads(8, 8, 8)]
 void main( uint3 DTid : SV_DispatchThreadID )
 {
-    TemperatureCurrent[DTid] = TemperaturePrevious[DTid] * exp(-coolingRate * deltaTime);
+    ReactionCurrent[DTid] = ReactionPrevious[DTid] * exp(-coolingRate * deltaTime);
 }

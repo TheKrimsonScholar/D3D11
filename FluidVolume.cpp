@@ -27,7 +27,11 @@ void FluidVolume::Initialize()
 		fluidComputeShaderInitialize->SetUnorderedAccessView("VelocityCurrent", velocityCurrentUAV.Get());
 		fluidComputeShaderInitialize->SetUnorderedAccessView("PressureCurrent", pressureCurrentUAV.Get());
 		fluidComputeShaderInitialize->SetUnorderedAccessView("DensityCurrent", densityCurrentUAV.Get());
-		fluidComputeShaderInitialize->SetUnorderedAccessView("TemperatureCurrent", temperatureCurrentUAV.Get());
+		fluidComputeShaderInitialize->SetUnorderedAccessView("ReactionCurrent", reactionCurrentUAV.Get());
+
+		fluidComputeShaderInitialize->SetInt("width", width);
+		fluidComputeShaderInitialize->SetInt("height", height);
+		fluidComputeShaderInitialize->SetInt("depth", depth);
 		
 		fluidComputeShaderInitialize->CopyAllBufferData();
 
@@ -37,18 +41,6 @@ void FluidVolume::Initialize()
 		Graphics::Context->CSSetUnorderedAccessViews(0, 8, nullUAVs, nullptr);
 
 		// Swap buffers
-		/*auto tempTexture = densityCurrentTexture;
-		densityCurrentTexture = densityPreviousTexture;
-		densityPreviousTexture = tempTexture;
-
-		auto tempSRV = densityCurrentSRV;
-		densityCurrentSRV = densityPreviousSRV;
-		densityPreviousSRV = tempSRV;
-
-		auto tempUAV = densityCurrentUAV;
-		densityCurrentUAV = densityPreviousUAV;
-		densityPreviousUAV = tempUAV;*/
-
 		std::swap(velocityPreviousTexture, velocityCurrentTexture);
 		std::swap(velocityPreviousSRV, velocityCurrentSRV);
 		std::swap(velocityPreviousUAV, velocityCurrentUAV);
@@ -61,9 +53,9 @@ void FluidVolume::Initialize()
 		std::swap(densityPreviousSRV, densityCurrentSRV);
 		std::swap(densityPreviousUAV, densityCurrentUAV);
 
-		std::swap(temperaturePreviousTexture, temperatureCurrentTexture);
-		std::swap(temperaturePreviousSRV, temperatureCurrentSRV);
-		std::swap(temperaturePreviousUAV, temperatureCurrentUAV);
+		std::swap(reactionPreviousTexture, reactionCurrentTexture);
+		std::swap(reactionPreviousSRV, reactionCurrentSRV);
+		std::swap(reactionPreviousUAV, reactionCurrentUAV);
 	}
 }
 void FluidVolume::CreateBuffers()
@@ -266,63 +258,63 @@ void FluidVolume::CreateBuffers()
 		Graphics::Device->CreateUnorderedAccessView(densityCurrentTexture.Get(), &densityCurrentUAVDesc, densityCurrentUAV.GetAddressOf());
 	}
 
-	/* Temperature */
+	/* Reaction Coordinate */
 	{
-		// Previous Temperature
-		D3D11_TEXTURE3D_DESC temperaturePreviousTextureDesc = {};
-		temperaturePreviousTextureDesc.Width = width;
-		temperaturePreviousTextureDesc.Height = height;
-		temperaturePreviousTextureDesc.Depth = depth;
-		temperaturePreviousTextureDesc.MipLevels = 1;
-		temperaturePreviousTextureDesc.Format = DXGI_FORMAT_R32_FLOAT;
-		temperaturePreviousTextureDesc.Usage = D3D11_USAGE_DEFAULT;
-		temperaturePreviousTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+		// Previous Reaction
+		D3D11_TEXTURE3D_DESC reactionPreviousTextureDesc = {};
+		reactionPreviousTextureDesc.Width = width;
+		reactionPreviousTextureDesc.Height = height;
+		reactionPreviousTextureDesc.Depth = depth;
+		reactionPreviousTextureDesc.MipLevels = 1;
+		reactionPreviousTextureDesc.Format = DXGI_FORMAT_R32_FLOAT;
+		reactionPreviousTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+		reactionPreviousTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 
-		Graphics::Device->CreateTexture3D(&temperaturePreviousTextureDesc, nullptr, temperaturePreviousTexture.GetAddressOf());
+		Graphics::Device->CreateTexture3D(&reactionPreviousTextureDesc, nullptr, reactionPreviousTexture.GetAddressOf());
 
-		// Current Temperature
-		D3D11_TEXTURE3D_DESC temperatureCurrentTextureDesc = {};
-		temperatureCurrentTextureDesc.Width = width;
-		temperatureCurrentTextureDesc.Height = height;
-		temperatureCurrentTextureDesc.Depth = depth;
-		temperaturePreviousTextureDesc.MipLevels = 1;
-		temperatureCurrentTextureDesc.Format = DXGI_FORMAT_R32_FLOAT;
-		temperatureCurrentTextureDesc.Usage = D3D11_USAGE_DEFAULT;
-		temperatureCurrentTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+		// Current Reaction
+		D3D11_TEXTURE3D_DESC reactionCurrentTextureDesc = {};
+		reactionCurrentTextureDesc.Width = width;
+		reactionCurrentTextureDesc.Height = height;
+		reactionCurrentTextureDesc.Depth = depth;
+		reactionPreviousTextureDesc.MipLevels = 1;
+		reactionCurrentTextureDesc.Format = DXGI_FORMAT_R32_FLOAT;
+		reactionCurrentTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+		reactionCurrentTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 
-		Graphics::Device->CreateTexture3D(&temperatureCurrentTextureDesc, nullptr, temperatureCurrentTexture.GetAddressOf());
+		Graphics::Device->CreateTexture3D(&reactionCurrentTextureDesc, nullptr, reactionCurrentTexture.GetAddressOf());
 
-		// Previous Temperature SRV
-		D3D11_SHADER_RESOURCE_VIEW_DESC temperaturePreviousSRVDesc = {};
-		temperaturePreviousSRVDesc.Format = temperaturePreviousTextureDesc.Format;
-		temperaturePreviousSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
-		temperaturePreviousSRVDesc.Texture3D.MipLevels = 1;
+		// Previous Reaction SRV
+		D3D11_SHADER_RESOURCE_VIEW_DESC reactionPreviousSRVDesc = {};
+		reactionPreviousSRVDesc.Format = reactionPreviousTextureDesc.Format;
+		reactionPreviousSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+		reactionPreviousSRVDesc.Texture3D.MipLevels = 1;
 
-		Graphics::Device->CreateShaderResourceView(temperaturePreviousTexture.Get(), &temperaturePreviousSRVDesc, temperaturePreviousSRV.GetAddressOf());
+		Graphics::Device->CreateShaderResourceView(reactionPreviousTexture.Get(), &reactionPreviousSRVDesc, reactionPreviousSRV.GetAddressOf());
 
-		// Previous Temperature UAV
-		D3D11_UNORDERED_ACCESS_VIEW_DESC temperaturePreviousUAVDesc = {};
-		temperaturePreviousUAVDesc.Format = temperaturePreviousTextureDesc.Format;
-		temperaturePreviousUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
-		temperaturePreviousUAVDesc.Texture3D.WSize = temperaturePreviousTextureDesc.Depth;
+		// Previous Reaction UAV
+		D3D11_UNORDERED_ACCESS_VIEW_DESC reactionPreviousUAVDesc = {};
+		reactionPreviousUAVDesc.Format = reactionPreviousTextureDesc.Format;
+		reactionPreviousUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+		reactionPreviousUAVDesc.Texture3D.WSize = reactionPreviousTextureDesc.Depth;
 
-		Graphics::Device->CreateUnorderedAccessView(temperaturePreviousTexture.Get(), &temperaturePreviousUAVDesc, temperaturePreviousUAV.GetAddressOf());
+		Graphics::Device->CreateUnorderedAccessView(reactionPreviousTexture.Get(), &reactionPreviousUAVDesc, reactionPreviousUAV.GetAddressOf());
 
-		// Current Temperature SRV
-		D3D11_SHADER_RESOURCE_VIEW_DESC temperatureCurrentSRVDesc = {};
-		temperatureCurrentSRVDesc.Format = temperatureCurrentTextureDesc.Format;
-		temperatureCurrentSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
-		temperatureCurrentSRVDesc.Texture3D.MipLevels = 1;
+		// Current Reaction SRV
+		D3D11_SHADER_RESOURCE_VIEW_DESC reactionCurrentSRVDesc = {};
+		reactionCurrentSRVDesc.Format = reactionCurrentTextureDesc.Format;
+		reactionCurrentSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+		reactionCurrentSRVDesc.Texture3D.MipLevels = 1;
 
-		Graphics::Device->CreateShaderResourceView(temperatureCurrentTexture.Get(), &temperatureCurrentSRVDesc, temperatureCurrentSRV.GetAddressOf());
+		Graphics::Device->CreateShaderResourceView(reactionCurrentTexture.Get(), &reactionCurrentSRVDesc, reactionCurrentSRV.GetAddressOf());
 
-		// Current Temperature UAV
-		D3D11_UNORDERED_ACCESS_VIEW_DESC temperatureCurrentUAVDesc = {};
-		temperatureCurrentUAVDesc.Format = temperatureCurrentTextureDesc.Format;
-		temperatureCurrentUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
-		temperatureCurrentUAVDesc.Texture3D.WSize = temperatureCurrentTextureDesc.Depth;
+		// Current Reaction UAV
+		D3D11_UNORDERED_ACCESS_VIEW_DESC reactionCurrentUAVDesc = {};
+		reactionCurrentUAVDesc.Format = reactionCurrentTextureDesc.Format;
+		reactionCurrentUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+		reactionCurrentUAVDesc.Texture3D.WSize = reactionCurrentTextureDesc.Depth;
 
-		Graphics::Device->CreateUnorderedAccessView(temperatureCurrentTexture.Get(), &temperatureCurrentUAVDesc, temperatureCurrentUAV.GetAddressOf());
+		Graphics::Device->CreateUnorderedAccessView(reactionCurrentTexture.Get(), &reactionCurrentUAVDesc, reactionCurrentUAV.GetAddressOf());
 	}
 
 	/* Sampler */
@@ -347,11 +339,14 @@ void FluidVolume::Update(float deltaTime)
 		fluidComputeShaderUpdate->SetShader();
 
 		fluidComputeShaderUpdate->SetShaderResourceView("VelocityPrevious", velocityPreviousSRV);
-		fluidComputeShaderUpdate->SetShaderResourceView("TemperaturePrevious", temperaturePreviousSRV);
+		fluidComputeShaderUpdate->SetShaderResourceView("ReactionPrevious", reactionPreviousSRV);
 
 		fluidComputeShaderUpdate->SetUnorderedAccessView("VelocityCurrent", velocityCurrentUAV);
-		fluidComputeShaderUpdate->SetUnorderedAccessView("TemperatureCurrent", temperatureCurrentUAV);
+		fluidComputeShaderUpdate->SetUnorderedAccessView("ReactionCurrent", reactionCurrentUAV);
 
+		fluidComputeShaderUpdate->SetInt("width", width);
+		fluidComputeShaderUpdate->SetInt("height", height);
+		fluidComputeShaderUpdate->SetInt("depth", depth);
 		fluidComputeShaderUpdate->SetFloat("deltaTime", deltaTime);
 
 		fluidComputeShaderUpdate->CopyAllBufferData();
@@ -368,9 +363,9 @@ void FluidVolume::Update(float deltaTime)
 		std::swap(velocityPreviousSRV, velocityCurrentSRV);
 		std::swap(velocityPreviousUAV, velocityCurrentUAV);
 
-		std::swap(temperaturePreviousTexture, temperatureCurrentTexture);
-		std::swap(temperaturePreviousSRV, temperatureCurrentSRV);
-		std::swap(temperaturePreviousUAV, temperatureCurrentUAV);
+		std::swap(reactionPreviousTexture, reactionCurrentTexture);
+		std::swap(reactionPreviousSRV, reactionCurrentSRV);
+		std::swap(reactionPreviousUAV, reactionCurrentUAV);
 	}
 
 	/* Advection */
@@ -380,15 +375,18 @@ void FluidVolume::Update(float deltaTime)
 		fluidComputeShaderAdvection->SetShaderResourceView("VelocityPrevious", velocityPreviousSRV);
 		fluidComputeShaderAdvection->SetShaderResourceView("PressurePrevious", pressurePreviousSRV);
 		fluidComputeShaderAdvection->SetShaderResourceView("DensityPrevious", densityPreviousSRV);
-		fluidComputeShaderAdvection->SetShaderResourceView("TemperaturePrevious", temperaturePreviousSRV);
+		fluidComputeShaderAdvection->SetShaderResourceView("ReactionPrevious", reactionPreviousSRV);
 
 		fluidComputeShaderAdvection->SetSamplerState("Sampler", sampler);
 
 		fluidComputeShaderAdvection->SetUnorderedAccessView("VelocityCurrent", velocityCurrentUAV);
 		fluidComputeShaderAdvection->SetUnorderedAccessView("PressureCurrent", pressureCurrentUAV);
 		fluidComputeShaderAdvection->SetUnorderedAccessView("DensityCurrent", densityCurrentUAV);
-		fluidComputeShaderAdvection->SetUnorderedAccessView("TemperatureCurrent", temperatureCurrentUAV);
+		fluidComputeShaderAdvection->SetUnorderedAccessView("ReactionCurrent", reactionCurrentUAV);
 
+		fluidComputeShaderAdvection->SetInt("width", width);
+		fluidComputeShaderAdvection->SetInt("height", height);
+		fluidComputeShaderAdvection->SetInt("depth", depth);
 		fluidComputeShaderAdvection->SetFloat("deltaTime", deltaTime);
 
 		fluidComputeShaderAdvection->CopyAllBufferData();
@@ -413,18 +411,17 @@ void FluidVolume::Update(float deltaTime)
 		std::swap(densityPreviousSRV, densityCurrentSRV);
 		std::swap(densityPreviousUAV, densityCurrentUAV);
 
-		std::swap(temperaturePreviousTexture, temperatureCurrentTexture);
-		std::swap(temperaturePreviousSRV, temperatureCurrentSRV);
-		std::swap(temperaturePreviousUAV, temperatureCurrentUAV);
+		std::swap(reactionPreviousTexture, reactionCurrentTexture);
+		std::swap(reactionPreviousSRV, reactionCurrentSRV);
+		std::swap(reactionPreviousUAV, reactionCurrentUAV);
 	}
-	//return;
 
 	/* Buoyancy */
 	{
 		fluidComputeShaderBuoyancy->SetShader();
 
 		fluidComputeShaderBuoyancy->SetShaderResourceView("VelocityPrevious", velocityPreviousSRV);
-		fluidComputeShaderBuoyancy->SetShaderResourceView("TemperaturePrevious", temperaturePreviousSRV);
+		fluidComputeShaderBuoyancy->SetShaderResourceView("ReactionPrevious", reactionPreviousSRV);
 
 		fluidComputeShaderBuoyancy->SetUnorderedAccessView("VelocityCurrent", velocityCurrentUAV);
 
@@ -449,9 +446,9 @@ void FluidVolume::Update(float deltaTime)
 	{
 		fluidComputeShaderCooling->SetShader();
 
-		fluidComputeShaderCooling->SetShaderResourceView("TemperaturePrevious", temperaturePreviousSRV);
+		fluidComputeShaderCooling->SetShaderResourceView("ReactionPrevious", reactionPreviousSRV);
 
-		fluidComputeShaderCooling->SetUnorderedAccessView("TemperatureCurrent", temperatureCurrentUAV);
+		fluidComputeShaderCooling->SetUnorderedAccessView("ReactionCurrent", reactionCurrentUAV);
 
 		fluidComputeShaderCooling->SetFloat("deltaTime", deltaTime);
 		fluidComputeShaderCooling->SetFloat("coolingRate", 10.0f);
@@ -466,9 +463,9 @@ void FluidVolume::Update(float deltaTime)
 		Graphics::Context->CSSetUnorderedAccessViews(0, 8, nullUAVs, nullptr);
 
 		// Swap buffers
-		std::swap(temperaturePreviousTexture, temperatureCurrentTexture);
-		std::swap(temperaturePreviousSRV, temperatureCurrentSRV);
-		std::swap(temperaturePreviousUAV, temperatureCurrentUAV);
+		std::swap(reactionPreviousTexture, reactionCurrentTexture);
+		std::swap(reactionPreviousSRV, reactionCurrentSRV);
+		std::swap(reactionPreviousUAV, reactionCurrentUAV);
 	}
 
 	/* Divergence */
@@ -545,33 +542,19 @@ void FluidVolume::Update(float deltaTime)
 }
 void FluidVolume::Draw(std::shared_ptr<Camera> camera)
 {
-	/*UINT stride = 0;
-	UINT offset = 0;
-	ID3D11Buffer* nullBuffer = 0;
-	Graphics::Context->IASetVertexBuffers(0, 1, &nullBuffer, &stride, &offset);
-	Graphics::Context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);*/
-
 	fluidVertexShader->SetShader();
 	fluidPixelShader->SetShader();
-
-	// Have the material set up the shader with its private values
-	//material->PrepareMaterial();
 
 	fluidVertexShader->SetMatrix4x4("worldMatrix", transform.GetWorldMatrix());
 	fluidVertexShader->SetMatrix4x4("viewMatrix", camera->GetViewMatrix());
 	fluidVertexShader->SetMatrix4x4("projMatrix", camera->GetProjectionMatrix());
 
-	fluidPixelShader->SetShaderResourceView("DensityPrevious", densityPreviousSRV);
-	fluidPixelShader->SetShaderResourceView("TemperaturePrevious", temperaturePreviousSRV);
+	fluidPixelShader->SetShaderResourceView("ReactionPrevious", reactionPreviousSRV);
 
 	fluidPixelShader->SetSamplerState("Sampler", sampler);
 
 	fluidPixelShader->SetMatrix4x4("worldMatrix", transform.GetWorldMatrix());
-	DirectX::XMFLOAT4X4 f44_worldMatrix = transform.GetWorldMatrix();
-	DirectX::XMMATRIX worldMatrix = DirectX::XMLoadFloat4x4(&f44_worldMatrix);
-	DirectX::XMFLOAT4X4 inverse;
-	DirectX::XMStoreFloat4x4(&inverse, DirectX::XMMatrixInverse(nullptr, worldMatrix));
-	fluidPixelShader->SetMatrix4x4("worldInverseMatrix", inverse);
+	fluidPixelShader->SetMatrix4x4("worldInverseMatrix", transform.GetWorldInverseMatrix());
 	fluidPixelShader->SetFloat3("cameraLocation", camera->GetTransform().GetLocation());
 
 	fluidVertexShader->CopyAllBufferData();

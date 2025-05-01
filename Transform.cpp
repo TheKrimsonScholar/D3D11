@@ -119,12 +119,21 @@ XMFLOAT4X4 Transform::GetWorldMatrix()
 		XMMATRIX world = scale * rotation * translation;
 
 		XMStoreFloat4x4(&worldMatrix, world);
+		XMStoreFloat4x4(&worldInverseMatrix, XMMatrixInverse(0, world));
 		XMStoreFloat4x4(&worldInverseTransposeMatrix, XMMatrixInverse(0, XMMatrixTranspose(world)));
 
 		isWorldMatrixDirty = false;
 	}
 
 	return worldMatrix;
+}
+XMFLOAT4X4 Transform::GetWorldInverseMatrix()
+{
+	// Make sure the matrices are up-to-date
+	if(isWorldMatrixDirty)
+		GetWorldMatrix();
+
+	return worldInverseMatrix;
 }
 XMFLOAT4X4 Transform::GetWorldInverseTransposeMatrix()
 {

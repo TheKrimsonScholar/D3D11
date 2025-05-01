@@ -106,6 +106,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11BlendState> particleBlendState;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> particleDepthState;
 
+	Microsoft::WRL::ComPtr<ID3D11BlendState> fluidBlendState;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> fluidDepthState;
+
 	// Shadow mapping resources
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowDSV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSRV;

@@ -295,6 +295,25 @@ void Game::InitializeParticles()
 }
 void Game::InitializeFluids()
 {
+	D3D11_BLEND_DESC fluidBlendDesc = {};
+	fluidBlendDesc.RenderTarget[0].BlendEnable = TRUE;
+	fluidBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	fluidBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	fluidBlendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	fluidBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	fluidBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	fluidBlendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	fluidBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	Graphics::Device->CreateBlendState(&fluidBlendDesc, fluidBlendState.GetAddressOf());
+
+	D3D11_DEPTH_STENCIL_DESC fluidStencilDesc = {};
+	fluidStencilDesc.DepthEnable = true;
+	fluidStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	fluidStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+
+	Graphics::Device->CreateDepthStencilState(&fluidStencilDesc, fluidDepthState.GetAddressOf());
+
 	for(std::shared_ptr<FluidVolume> fluid : fluidVolumes)
 		fluid->Initialize();
 }
@@ -919,11 +938,20 @@ void Game::Draw(float deltaTime, float totalTime)
 			e->Draw(GetCamera(), totalTime);
 		}
 
+		// Draw skybox
+		skybox->Draw(GetCamera());
+
+		// Set blend and depth states for fluids
+		Graphics::Context->OMSetBlendState(fluidBlendState.Get(), 0, 0xffffffff);
+		Graphics::Context->OMSetDepthStencilState(fluidDepthState.Get(), 0);
+
 		for(std::shared_ptr<FluidVolume> fluid : fluidVolumes)
 			fluid->Draw(GetCamera());
 
-		// Draw skybox
-		skybox->Draw(GetCamera());
+		// Reset states
+		Graphics::Context->OMSetBlendState(0, 0, 0xffffffff);
+		Graphics::Context->OMSetDepthStencilState(0, 0);
+		Graphics::Context->RSSetState(0);
 	}
 
 	/* POST-PROCESS */

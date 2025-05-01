@@ -51,12 +51,12 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> densityCurrentSRV;
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> densityCurrentUAV;
 
-	Microsoft::WRL::ComPtr<ID3D11Texture3D> temperaturePreviousTexture;
-	Microsoft::WRL::ComPtr<ID3D11Texture3D> temperatureCurrentTexture;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> temperaturePreviousSRV;
-	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> temperaturePreviousUAV;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> temperatureCurrentSRV;
-	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> temperatureCurrentUAV;
+	Microsoft::WRL::ComPtr<ID3D11Texture3D> reactionPreviousTexture;
+	Microsoft::WRL::ComPtr<ID3D11Texture3D> reactionCurrentTexture;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> reactionPreviousSRV;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> reactionPreviousUAV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> reactionCurrentSRV;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> reactionCurrentUAV;
 
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 

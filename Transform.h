@@ -10,6 +10,7 @@ private:
 	DirectX::XMFLOAT3 scale;
 
 	DirectX::XMFLOAT4X4 worldMatrix;
+	DirectX::XMFLOAT4X4 worldInverseMatrix;
 	DirectX::XMFLOAT4X4 worldInverseTransposeMatrix;
 
 	// Flag for if the stored world matrix needs to be updated to reflect transformations
@@ -35,6 +36,7 @@ public:
 	DirectX::XMFLOAT3 GetUp();
 	DirectX::XMFLOAT3 GetForward();
 	DirectX::XMFLOAT4X4 GetWorldMatrix();
+	DirectX::XMFLOAT4X4 GetWorldInverseMatrix();
 	DirectX::XMFLOAT4X4 GetWorldInverseTransposeMatrix();
 
 	void SetLocation(float x, float y, float z);
